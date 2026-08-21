@@ -272,13 +272,21 @@ echo "BUILDING NSIS INSTALLER"
 # NSIS is not in the base msys2 image; install it now
 pacman -S --noconfirm --needed mingw-w64-x86_64-nsis
 VER=$(git describe --tags)
+NSIS_SCRIPT="$SCRIPTS_DIR/../packaging/qimgv-installer.nsi"
+# add a UTF-8 BOM so makensis reads the Chinese strings correctly
+# (the CI runner is en-US; without a BOM makensis decodes the .nsi as ACP)
+sed -i '1s/^/\xef\xbb\xbf/' "$NSIS_SCRIPT"
 # disable msys2 path conversion so the /D... defines reach makensis intact
 export MSYS2_ARG_CONV_EXCL='*'
 makensis.exe \
     /DVER="$VER" \
     /DBUILD_DIR="$(cygpath -w $PACKAGE_DIR)" \
     /DAPP_ICON="$(cygpath -w $SRC_DIR/qimgv/res/icons/common/logo/app/qimgv.ico)" \
-    "$(cygpath -w $SCRIPTS_DIR/../packaging/qimgv-installer.nsi)"
+    "$(cygpath -w $NSIS_SCRIPT)"
+# makensis writes the OutFile next to the script (packaging/), move it to repo root
+if [ -f "$SRC_DIR/packaging/qimgv-x64_$VER.exe" ]; then
+    mv "$SRC_DIR/packaging/qimgv-x64_$VER.exe" "$SRC_DIR/qimgv-x64_$VER.exe"
+fi
 if [ ! -f "$SRC_DIR/qimgv-x64_$VER.exe" ]; then
     echo "ERROR: NSIS installer build failed - qimgv-x64_$VER.exe not found"
     exit 1
