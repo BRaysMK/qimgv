@@ -1,4 +1,5 @@
 #include "documentinfo.h"
+#include <QStringList>
 
 DocumentInfo::DocumentInfo(QString path)
     : mDocumentType(DocumentType::NONE),
@@ -200,6 +201,31 @@ void DocumentInfo::loadExifTags() {
         Exiv2::ExifData &exifData = image->exifData();
         if(exifData.empty())
             return;
+
+        // Add every available EXIF tag, so that the whole EXIF block is shown.
+        // The few tags handled below (with nicer formatting / localized names)
+        // are excluded here to avoid duplicate entries.
+        QStringList curatedKeys = {
+            "Exif.Image.Make",
+            "Exif.Image.Model",
+            "Exif.Image.DateTime",
+            "Exif.Photo.ExposureTime",
+            "Exif.Photo.FNumber",
+            "Exif.Photo.ISOSpeedRatings",
+            "Exif.Photo.Flash",
+            "Exif.Photo.FocalLength",
+            "Exif.Photo.UserComment"
+        };
+        for(const auto &datum : exifData) {
+            if(curatedKeys.contains(QString::fromStdString(datum.key())))
+                continue;
+            QString name = QString::fromStdString(std::string(datum.groupName()))
+                           + "." + QString::fromStdString(std::string(datum.tagName()));
+            QString value = QString::fromStdString(datum.value().toString());
+            if(value.isEmpty())
+                continue;
+            exifTags.insert(name, value);
+        }
 
         Exiv2::ExifKey make("Exif.Image.Make");
         Exiv2::ExifKey model("Exif.Image.Model");

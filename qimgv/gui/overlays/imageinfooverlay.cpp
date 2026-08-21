@@ -8,7 +8,7 @@ ImageInfoOverlay::ImageInfoOverlay(FloatingWidgetContainer *parent) :
     ui->setupUi(this);
     ui->closeButton->setIconPath(":res/icons/common/overlay/close-dim16.png");
     ui->headerIcon->setIconPath(":res/icons/common/overlay/info16.png");
-    entryStub.setFixedSize(280, 48);
+    entryStub.setFixedSize(300, 48);
     entryStub.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     connect(ui->closeButton,  &IconButton::clicked, this, &ImageInfoOverlay::hide);
     this->setPosition(FloatingWidgetPosition::RIGHT);
@@ -68,6 +68,25 @@ void ImageInfoOverlay::show() {
     OverlayWidget::show();
     adjustSize();
     recalculateGeometry();
+}
+
+void ImageInfoOverlay::recalculateGeometry() {
+    // Keep the panel inside the window: cap the scrollable area's height
+    // (a full EXIF dump can easily have several dozen entries).
+    int cap = containerSize().height() - 90; // header + margins
+    cap = qBound(120, cap, 500);
+    ui->scrollArea->setMaximumHeight(cap);
+
+    OverlayWidget::recalculateGeometry();
+
+    // The layout may still ask for more space than the window provides;
+    // clamp the final geometry so nothing is pushed off-screen.
+    int totalMax = containerSize().height() - 20;
+    if(geometry().height() > totalMax) {
+        QRect r = geometry();
+        r.setHeight(totalMax);
+        setGeometry(r);
+    }
 }
 
 void ImageInfoOverlay::wheelEvent(QWheelEvent *event) {

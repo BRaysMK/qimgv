@@ -22,6 +22,7 @@ public slots:
 
 protected:
     void wheelEvent(QWheelEvent *event);
+    void recalculateGeometry() override;
 private:
     Ui::ImageInfoOverlay *ui;
     QList<EntryInfoItem*> entries;

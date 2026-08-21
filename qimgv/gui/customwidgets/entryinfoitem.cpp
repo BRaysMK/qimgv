@@ -7,8 +7,13 @@ EntryInfoItem::EntryInfoItem(QWidget *parent) : QWidget(parent) {
     layout.addWidget(&valueLabel);
     setLayout(&layout);
 
-    nameLabel.setFixedSize(120,30);
-    valueLabel.setFixedSize(142,30);
+    // name column: fixed width, stays on one line
+    nameLabel.setFixedWidth(150);
+    nameLabel.setMinimumHeight(30);
+    // value column: takes the remaining space and wraps long values
+    valueLabel.setMinimumHeight(30);
+    valueLabel.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
+    valueLabel.setWordWrap(true);
 
     // add some padding for easier text selection
     valueLabel.setContentsMargins(3,0,0,0);
@@ -21,6 +26,9 @@ void EntryInfoItem::setInfo(QString _name, QString _value) {
     value = _value;
     nameLabel.setText(name);
     valueLabel.setText(value);
+    // keep the full text reachable even if the column is too narrow
+    nameLabel.setToolTip(name);
+    valueLabel.setToolTip(value);
 };
 
 void EntryInfoItem::paintEvent(QPaintEvent *event) {
