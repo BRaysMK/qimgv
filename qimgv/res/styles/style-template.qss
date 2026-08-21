@@ -883,8 +883,49 @@ BookmarksItem[highlighted="true"] {
     font: bold;
 }
 /*----------------------------------------------------------------------------*/
+ImageInfoOverlay {
+    background-color: %overlay_rgba%;
+    border-radius: 3px;
+}
+
 ImageInfoOverlay QLabel {
     color: %text%;
+}
+
+/* transparent scroll area, so the panel's overlay background shows through */
+ImageInfoOverlay QScrollArea {
+    background: transparent;
+    border: none;
+}
+
+ImageInfoOverlay QScrollArea > QWidget > QWidget {
+    background: transparent;
+}
+
+ImageInfoOverlay QScrollBar:vertical {
+    width: 8px;
+    background-color: transparent;
+}
+
+ImageInfoOverlay QScrollBar::handle:vertical {
+    background-color: %scrollbar%;
+    min-height: 30px;
+    border-radius: 4px;
+}
+
+ImageInfoOverlay QScrollBar::handle:vertical:hover {
+    background-color: %scrollbar_hover%;
+}
+
+ImageInfoOverlay QScrollBar::sub-page,
+ImageInfoOverlay QScrollBar::add-page {
+    background: none;
+}
+
+ImageInfoOverlay QScrollBar::add-line,
+ImageInfoOverlay QScrollBar::sub-line {
+    width: 0px;
+    height: 0px;
 }
 
 EntryInfoItem {

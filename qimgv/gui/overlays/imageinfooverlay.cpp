@@ -1,5 +1,6 @@
 #include "imageinfooverlay.h"
 #include "ui_imageinfooverlay.h"
+#include <QFontMetrics>
 
 ImageInfoOverlay::ImageInfoOverlay(FloatingWidgetContainer *parent) :
     OverlayWidget(parent),
@@ -53,15 +54,11 @@ void ImageInfoOverlay::setExifInfo(QMap<QString, QString> info) {
         entryStub.setText("");
     } else {
         ui->entryLayout->addWidget(&entryStub);
-        entryStub.setText("<no metadata found>");
+        entryStub.setText(tr("<no metadata found>"));
     }
 
-    if(!isHidden() && entryCount != info.count()) {
-        // wait for layout change
-        qApp->processEvents();
-        // reposition
-        recalculateGeometry();
-    }
+    // always recompute geometry so the panel adapts to the (possibly empty) content
+    recalculateGeometry();
 }
 
 void ImageInfoOverlay::show() {
@@ -71,16 +68,33 @@ void ImageInfoOverlay::show() {
 }
 
 void ImageInfoOverlay::recalculateGeometry() {
-    // Keep the panel inside the window: cap the scrollable area's height
-    // (a full EXIF dump can easily have several dozen entries).
-    int cap = containerSize().height() - 90; // header + margins
-    cap = qBound(120, cap, 500);
-    ui->scrollArea->setMaximumHeight(cap);
+    const int headerHeight = 44; // header row
+    const int entryHeight = 34;  // one metadata row
+
+    // Adaptive height: fit as many rows as fit on screen, cap at the window
+    // size, and let the scroll area handle the rest (explicit height, so the
+    // entries are always laid out even before the layout's sizeHint settles).
+    // with no entries leave room for the "no metadata" stub
+    int contentH = entries.count() ? entries.count() * entryHeight : 50;
+    int cap = qMax(120, containerSize().height() - 90);
+    int scrollH = qBound(entryHeight, contentH, cap - headerHeight);
+    ui->scrollArea->setFixedHeight(scrollH);
+
+    // Adaptive width: fit the widest single-line entry, but cap it so long
+    // values wrap inside the value column instead of blowing up the panel.
+    int nameW = 150;
+    int valueW = 160;
+    QFontMetrics fm(entryStub.font());
+    for(EntryInfoItem *e : entries) {
+        valueW = qMax(valueW, fm.horizontalAdvance(e->value()) + 8);
+    }
+    valueW = qBound(160, valueW, 360);
+    int width = qBound(360, nameW + valueW + 36, 560);
+    setFixedWidth(width);
 
     OverlayWidget::recalculateGeometry();
 
-    // The layout may still ask for more space than the window provides;
-    // clamp the final geometry so nothing is pushed off-screen.
+    // clamp the final height so nothing is pushed off-screen
     int totalMax = containerSize().height() - 20;
     if(geometry().height() > totalMax) {
         QRect r = geometry();

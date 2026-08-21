@@ -14,6 +14,8 @@ class EntryInfoItem : public QWidget
 public:
     explicit EntryInfoItem(QWidget *parent = nullptr);
     void setInfo(QString _name, QString _value);
+    QString name() const { return name; }
+    QString value() const { return value; }
 
 protected:
     void paintEvent(QPaintEvent *event);

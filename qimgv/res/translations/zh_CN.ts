@@ -572,6 +572,11 @@
         <source>EXIF Tags</source>
         <translation>EXIF标签</translation>
     </message>
+    <message>
+        <location filename="../../gui/overlays/imageinfooverlay.cpp" line="57"/>
+        <source>&lt;no metadata found&gt;</source>
+        <translation>无元数据信息</translation>
+    </message>
 </context>
 <context>
     <name>KeySequenceEdit</name>
@@ -1963,6 +1968,16 @@ hr { height: 1px; border-width: 0; }
         <location filename="../../gui/dialogs/shortcutcreatordialog.ui" line="124"/>
         <source>[Enter shortcut]</source>
         <translation>[输入快捷方式]</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/shortcutcreatordialog.cpp" line="10"/>
+        <source>Add shortcut</source>
+        <translation>添加快捷键</translation>
+    </message>
+    <message>
+        <location filename="../../gui/dialogs/shortcutcreatordialog.cpp" line="41"/>
+        <source>This shortcut is used for action: %1. Replace?</source>
+        <translation>此快捷键已用于操作：%1。是否替换？</translation>
     </message>
 </context>
 <context>

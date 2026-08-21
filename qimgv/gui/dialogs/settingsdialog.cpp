@@ -1,5 +1,6 @@
 #include "settingsdialog.h"
 #include "ui_settingsdialog.h"
+#include "shortcutnames.h"
 
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
@@ -546,12 +547,14 @@ void SettingsDialog::removeScript() {
 }
 //------------------------------------------------------------------------------
 // does not check if the shortcut already there
+//------------------------------------------------------------------------------
 void SettingsDialog::addShortcutToTable(const QString &action, const QString &shortcut) {
     if(action.isEmpty() || shortcut.isEmpty())
         return;
 
     ui->shortcutsTableWidget->setRowCount(ui->shortcutsTableWidget->rowCount() + 1);
-    QTableWidgetItem *actionItem = new QTableWidgetItem(action);
+    QTableWidgetItem *actionItem = new QTableWidgetItem(localizedActionName(action));
+    actionItem->setData(Qt::UserRole, action); // keep the raw action key for save/edit
     actionItem->setTextAlignment(Qt::AlignCenter);
     ui->shortcutsTableWidget->setItem(ui->shortcutsTableWidget->rowCount() - 1, 0, actionItem);
     QTableWidgetItem *shortcutItem = new QTableWidgetItem(shortcut);
@@ -588,7 +591,10 @@ void SettingsDialog::editShortcut(int row) {
     if(row >= 0) {
         ShortcutCreatorDialog w;
         w.setWindowTitle(tr("Edit shortcut"));
-        w.setAction(ui->shortcutsTableWidget->item(row, 0)->text());
+        QString act = ui->shortcutsTableWidget->item(row, 0)->data(Qt::UserRole).toString();
+        if(act.isEmpty())
+            act = ui->shortcutsTableWidget->item(row, 0)->text();
+        w.setAction(act);
         w.setShortcut(ui->shortcutsTableWidget->item(row, 1)->text());
         if(!w.exec())
             return;
@@ -621,8 +627,10 @@ void SettingsDialog::removeShortcut() {
 void SettingsDialog::saveShortcuts() {
     actionManager->removeAllShortcuts();
     for(int i = 0; i < ui->shortcutsTableWidget->rowCount(); i++) {
-        actionManager->addShortcut(ui->shortcutsTableWidget->item(i, 1)->text(),
-                                   ui->shortcutsTableWidget->item(i, 0)->text());
+        QString act = ui->shortcutsTableWidget->item(i, 0)->data(Qt::UserRole).toString();
+        if(act.isEmpty())
+            act = ui->shortcutsTableWidget->item(i, 0)->text();
+        actionManager->addShortcut(ui->shortcutsTableWidget->item(i, 1)->text(), act);
     }
 }
 //------------------------------------------------------------------------------

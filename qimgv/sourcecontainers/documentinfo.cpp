@@ -1,5 +1,6 @@
 #include "documentinfo.h"
 #include <QStringList>
+#include <QHash>
 
 DocumentInfo::DocumentInfo(QString path)
     : mDocumentType(DocumentType::NONE),
@@ -185,6 +186,132 @@ bool DocumentInfo::detectAnimatedAvif() {
     return result;
 }
 
+// Localize the most common EXIF tag names ("group.tag" -> Chinese).
+// Unknown tags keep their original (English) name.
+static QString localizedTagName(const QString &raw) {
+    static const QHash<QString, QString> names = {
+        // --- Exif.Image ---
+        {"Image.ImageWidth", QStringLiteral("图像宽度")},
+        {"Image.ImageLength", QStringLiteral("图像高度")},
+        {"Image.BitsPerSample", QStringLiteral("每样本位数")},
+        {"Image.Compression", QStringLiteral("压缩方式")},
+        {"Image.PhotometricInterpretation", QStringLiteral("光度解释")},
+        {"Image.Orientation", QStringLiteral("方向")},
+        {"Image.SamplesPerPixel", QStringLiteral("每像素样本数")},
+        {"Image.XResolution", QStringLiteral("水平分辨率")},
+        {"Image.YResolution", QStringLiteral("垂直分辨率")},
+        {"Image.ResolutionUnit", QStringLiteral("分辨率单位")},
+        {"Image.Software", QStringLiteral("软件")},
+        {"Image.DateTime", QStringLiteral("日期时间")},
+        {"Image.Artist", QStringLiteral("作者")},
+        {"Image.Copyright", QStringLiteral("版权")},
+        {"Image.ImageDescription", QStringLiteral("图像描述")},
+        {"Image.Make", QStringLiteral("相机制造商")},
+        {"Image.Model", QStringLiteral("相机型号")},
+        // --- Exif.Photo ---
+        {"Photo.ExposureTime", QStringLiteral("曝光时间")},
+        {"Photo.FNumber", QStringLiteral("光圈数")},
+        {"Photo.ExposureProgram", QStringLiteral("曝光程序")},
+        {"Photo.ISOSpeedRatings", QStringLiteral("ISO感光度")},
+        {"Photo.ExifVersion", QStringLiteral("Exif版本")},
+        {"Photo.DateTimeOriginal", QStringLiteral("原始拍摄时间")},
+        {"Photo.DateTimeDigitized", QStringLiteral("数字化时间")},
+        {"Photo.ComponentsConfiguration", QStringLiteral("分量配置")},
+        {"Photo.CompressedBitsPerPixel", QStringLiteral("压缩位/像素")},
+        {"Photo.ShutterSpeedValue", QStringLiteral("快门速度")},
+        {"Photo.ApertureValue", QStringLiteral("光圈值")},
+        {"Photo.BrightnessValue", QStringLiteral("亮度值")},
+        {"Photo.ExposureBiasValue", QStringLiteral("曝光补偿")},
+        {"Photo.MaxApertureValue", QStringLiteral("最大光圈")},
+        {"Photo.SubjectDistance", QStringLiteral("拍摄距离")},
+        {"Photo.MeteringMode", QStringLiteral("测光模式")},
+        {"Photo.LightSource", QStringLiteral("光源")},
+        {"Photo.Flash", QStringLiteral("闪光灯")},
+        {"Photo.FocalLength", QStringLiteral("焦距")},
+        {"Photo.SubjectArea", QStringLiteral("主体区域")},
+        {"Photo.MakerNote", QStringLiteral("厂商备注")},
+        {"Photo.UserComment", QStringLiteral("用户注释")},
+        {"Photo.SubSecTime", QStringLiteral("秒以下时间")},
+        {"Photo.SubSecTimeOriginal", QStringLiteral("原始拍摄时间(亚秒)")},
+        {"Photo.SubSecTimeDigitized", QStringLiteral("数字化时间(亚秒)")},
+        {"Photo.FlashpixVersion", QStringLiteral("FlashPix版本")},
+        {"Photo.ColorSpace", QStringLiteral("色彩空间")},
+        {"Photo.PixelXDimension", QStringLiteral("像素宽度")},
+        {"Photo.PixelYDimension", QStringLiteral("像素高度")},
+        {"Photo.RelatedSoundFile", QStringLiteral("相关音频文件")},
+        {"Photo.FocalPlaneXResolution", QStringLiteral("焦平面水平分辨率")},
+        {"Photo.FocalPlaneYResolution", QStringLiteral("焦平面垂直分辨率")},
+        {"Photo.FocalPlaneResolutionUnit", QStringLiteral("焦平面分辨率单位")},
+        {"Photo.SensingMethod", QStringLiteral("感光方式")},
+        {"Photo.FileSource", QStringLiteral("文件来源")},
+        {"Photo.SceneType", QStringLiteral("场景类型")},
+        {"Photo.CustomRendered", QStringLiteral("自定义渲染")},
+        {"Photo.ExposureMode", QStringLiteral("曝光模式")},
+        {"Photo.WhiteBalance", QStringLiteral("白平衡")},
+        {"Photo.DigitalZoomRatio", QStringLiteral("数码变焦比率")},
+        {"Photo.FocalLengthIn35mmFilm", QStringLiteral("35mm等效焦距")},
+        {"Photo.SceneCaptureType", QStringLiteral("场景拍摄类型")},
+        {"Photo.GainControl", QStringLiteral("增益控制")},
+        {"Photo.Contrast", QStringLiteral("对比度")},
+        {"Photo.Saturation", QStringLiteral("饱和度")},
+        {"Photo.Sharpness", QStringLiteral("锐度")},
+        {"Photo.SubjectDistanceRange", QStringLiteral("主体距离范围")},
+        {"Photo.ImageUniqueID", QStringLiteral("图像唯一ID")},
+        {"Photo.LensSpecification", QStringLiteral("镜头规格")},
+        {"Photo.LensModel", QStringLiteral("镜头型号")},
+        {"Photo.LensMake", QStringLiteral("镜头制造商")},
+        {"Photo.PhotographicSensitivity", QStringLiteral("感光度")},
+        {"Photo.SensitivityType", QStringLiteral("感光度类型")},
+        {"Photo.OffsetTime", QStringLiteral("时区偏移")},
+        {"Photo.OffsetTimeOriginal", QStringLiteral("拍摄时区偏移")},
+        {"Photo.OffsetTimeDigitized", QStringLiteral("数字化时区偏移")},
+        {"Photo.CameraOwnerName", QStringLiteral("相机所有者")},
+        {"Photo.BodySerialNumber", QStringLiteral("机身序列号")},
+        {"Photo.LensSerialNumber", QStringLiteral("镜头序列号")},
+        // --- Exif.GPSInfo ---
+        {"GPSInfo.GPSVersionID", QStringLiteral("GPS版本")},
+        {"GPSInfo.GPSLatitudeRef", QStringLiteral("纬度方向")},
+        {"GPSInfo.GPSLatitude", QStringLiteral("纬度")},
+        {"GPSInfo.GPSLongitudeRef", QStringLiteral("经度方向")},
+        {"GPSInfo.GPSLongitude", QStringLiteral("经度")},
+        {"GPSInfo.GPSAltitudeRef", QStringLiteral("海拔参考")},
+        {"GPSInfo.GPSAltitude", QStringLiteral("海拔")},
+        {"GPSInfo.GPSTimeStamp", QStringLiteral("GPS时间")},
+        {"GPSInfo.GPSSatellites", QStringLiteral("GPS卫星")},
+        {"GPSInfo.GPSStatus", QStringLiteral("GPS状态")},
+        {"GPSInfo.GPSMeasureMode", QStringLiteral("GPS测量模式")},
+        {"GPSInfo.GPSDOP", QStringLiteral("GPS精度因子")},
+        {"GPSInfo.GPSSpeedRef", QStringLiteral("速度单位")},
+        {"GPSInfo.GPSSpeed", QStringLiteral("速度")},
+        {"GPSInfo.GPSTrackRef", QStringLiteral("方向参考")},
+        {"GPSInfo.GPSTrack", QStringLiteral("方向")},
+        {"GPSInfo.GPSImgDirectionRef", QStringLiteral("图像方向参考")},
+        {"GPSInfo.GPSImgDirection", QStringLiteral("图像方向")},
+        {"GPSInfo.GPSMapDatum", QStringLiteral("地图基准")},
+        {"GPSInfo.GPSDestLatitudeRef", QStringLiteral("目标纬度方向")},
+        {"GPSInfo.GPSDestLatitude", QStringLiteral("目标纬度")},
+        {"GPSInfo.GPSDestLongitudeRef", QStringLiteral("目标经度方向")},
+        {"GPSInfo.GPSDestLongitude", QStringLiteral("目标经度")},
+        {"GPSInfo.GPSDestBearingRef", QStringLiteral("目标方位参考")},
+        {"GPSInfo.GPSDestBearing", QStringLiteral("目标方位")},
+        {"GPSInfo.GPSDestDistanceRef", QStringLiteral("目标距离单位")},
+        {"GPSInfo.GPSDestDistance", QStringLiteral("目标距离")},
+        {"GPSInfo.GPSProcessingMethod", QStringLiteral("GPS处理方法")},
+        {"GPSInfo.GPSAreaInformation", QStringLiteral("GPS区域信息")},
+        {"GPSInfo.GPSDateStamp", QStringLiteral("GPS日期")},
+        {"GPSInfo.GPSHPositioningError", QStringLiteral("GPS定位误差")},
+        // --- Exif.Thumbnail ---
+        {"Thumbnail.ImageWidth", QStringLiteral("缩略图宽度")},
+        {"Thumbnail.ImageLength", QStringLiteral("缩略图高度")},
+        {"Thumbnail.Compression", QStringLiteral("缩略图压缩")},
+        {"Thumbnail.XResolution", QStringLiteral("缩略图水平分辨率")},
+        {"Thumbnail.YResolution", QStringLiteral("缩略图垂直分辨率")},
+        {"Thumbnail.JPEGInterchangeFormat", QStringLiteral("缩略图偏移")},
+        {"Thumbnail.JPEGInterchangeFormatLength", QStringLiteral("缩略图长度")}
+    };
+    return names.value(raw, raw);
+}
+
 void DocumentInfo::loadExifTags() {
     if(exifLoaded)
         return;
@@ -224,7 +351,7 @@ void DocumentInfo::loadExifTags() {
             QString value = QString::fromStdString(datum.value().toString());
             if(value.isEmpty())
                 continue;
-            exifTags.insert(name, value);
+            exifTags.insert(localizedTagName(name), value);
         }
 
         Exiv2::ExifKey make("Exif.Image.Make");

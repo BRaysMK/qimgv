@@ -1,16 +1,19 @@
 #include "shortcutcreatordialog.h"
 #include "ui_shortcutcreatordialog.h"
+#include "shortcutnames.h"
 
 ShortcutCreatorDialog::ShortcutCreatorDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ShortcutCreatorDialog)
 {
     ui->setupUi(this);
-    setWindowTitle("Add shortcut");
+    setWindowTitle(tr("Add shortcut"));
     actionList = appActions->getList();
     scriptList = scriptManager->scriptNames();
 
-    ui->actionsComboBox->addItems(actionList);
+    // show localized names, keep the raw action key as item data
+    for(const QString &a : actionList)
+        ui->actionsComboBox->addItem(localizedActionName(a), a);
     ui->actionsComboBox->setCurrentIndex(0);
 
     ui->scriptsComboBox->addItems(scriptList);
@@ -23,7 +26,7 @@ ShortcutCreatorDialog::~ShortcutCreatorDialog() {
 
 QString ShortcutCreatorDialog::selectedAction() {
     if(ui->actionsRadioButton->isChecked())
-        return ui->actionsComboBox->currentText();
+        return ui->actionsComboBox->currentData().toString();
     else
         return "s:"+ui->scriptsComboBox->currentText();
 }
@@ -35,7 +38,7 @@ QString ShortcutCreatorDialog::selectedShortcut() {
 void ShortcutCreatorDialog::onShortcutEdited() {
     QString action = actionManager->actionForShortcut(ui->sequenceEdit->sequence());
     if(!action.isEmpty())
-        ui->warningLabel->setText("This shortcut is used for action: " + action + ". Replace?");
+        ui->warningLabel->setText(tr("This shortcut is used for action: %1. Replace?").arg(localizedActionName(action)));
     else
         ui->warningLabel->setText("");
 }
@@ -47,7 +50,8 @@ void ShortcutCreatorDialog::setAction(QString action) {
         cbox = ui->scriptsComboBox;
         ui->scriptsRadioButton->setChecked(true);
     }
-    int index = cbox->findText(action);
+    // actions combo holds the raw key as item data; scripts combo is text-only
+    int index = (cbox == ui->actionsComboBox) ? cbox->findData(action) : cbox->findText(action);
     if(index != -1)
        cbox->setCurrentIndex(index);
 }
