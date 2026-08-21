@@ -64,7 +64,8 @@ rm mpv-x64.7z
 
 # ------------------------------------------------------------------------------
 echo "BUILDING EXIV2 (not available in the mingw64 repo; building from source)"
-# v0.27.x: matches the API qimgv was written against (open(std::wstring), libexiv2-27.dll)
+# v0.27.x: matches the API qimgv was written against (open(std::wstring));
+# EXIV2_ENABLE_WIN_UNICODE=ON is required or the std::wstring overload is not built
 cd $EXT_DIR
 git clone --depth 1 --branch v0.27.7 https://github.com/Exiv2/exiv2.git
 cd exiv2
@@ -85,7 +86,8 @@ cmake -S . -B build -G Ninja \
     -DEXIV2_ENABLE_CURL=OFF \
     -DEXIV2_ENABLE_SSH=OFF \
     -DEXIV2_ENABLE_INIH=OFF \
-    -DEXIV2_ENABLE_BROTLI=OFF
+    -DEXIV2_ENABLE_BROTLI=OFF \
+    -DEXIV2_ENABLE_WIN_UNICODE=ON
 ninja -C build
 ninja -C build install
 
@@ -214,15 +216,15 @@ mkdir $PACKAGE_DIR/platforms
 cp platforms/qwindows.dll $PACKAGE_DIR/platforms
 
 # 3 - copy msys dlls
-MSYS_DLLS=$(grep -v '^libexiv2-27.dll' $BUILD_DIR/msys2-dll-deps.txt | tr '\n' ' ')
+MSYS_DLLS=$(grep -v '^libexiv2' $BUILD_DIR/msys2-dll-deps.txt | tr '\n' ' ')
 cd $MSYS_DIR/bin
 cp $MSYS_DLLS $PACKAGE_DIR
-# exiv2 was built from source; copy its runtime dll
-cp $MSYS_DIR/bin/libexiv2-27.dll $PACKAGE_DIR
+# exiv2 was built from source; copy its runtime dll (MinGW names it libexiv2.dll)
+cp $MSYS_DIR/bin/libexiv2.dll $PACKAGE_DIR
 
 # Copy every runtime dependency reported by ldd (covers stale dll lists and
 # version bumps in the msys2 packages)
-for f in $(find $PACKAGE_DIR ( -name "*.dll" -o -name "*.exe" )); do
+for f in $(find $PACKAGE_DIR -name "*.dll" -o -name "*.exe"); do
     for d in $(ldd "$f" 2>/dev/null | grep '=>' | awk '{print $1}'); do
         if [ -f "$MSYS_DIR/bin/$d" ] && [ ! -f "$PACKAGE_DIR/$d" ]; then
             cp "$MSYS_DIR/bin/$d" "$PACKAGE_DIR"
