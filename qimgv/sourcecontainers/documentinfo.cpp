@@ -361,96 +361,15 @@ void DocumentInfo::loadExifTags() {
         if(exifData.empty())
             return;
 
-        // Add every available EXIF tag, so that the whole EXIF block is shown.
-        // The few tags handled below (with nicer formatting / localized names)
-        // are excluded here to avoid duplicate entries.
-        QStringList curatedKeys = {
-            "Exif.Image.Make",
-            "Exif.Image.Model",
-            "Exif.Image.DateTime",
-            "Exif.Photo.ExposureTime",
-            "Exif.Photo.FNumber",
-            "Exif.Photo.ISOSpeedRatings",
-            "Exif.Photo.Flash",
-            "Exif.Photo.FocalLength",
-            "Exif.Photo.UserComment"
-        };
+        // Show every EXIF tag exactly as exiv2 reads it (raw value, localized
+        // display name) - no hand-written formatting of our own.
         for(const auto &datum : exifData) {
-            if(curatedKeys.contains(QString::fromStdString(datum.key())))
-                continue;
             QString name = QString::fromStdString(std::string(datum.groupName()))
                            + "." + QString::fromStdString(std::string(datum.tagName()));
             QString value = QString::fromStdString(datum.value().toString());
             if(value.isEmpty())
                 continue;
             exifTags.insert(localizedTagName(name), value);
-        }
-
-        Exiv2::ExifKey make("Exif.Image.Make");
-        Exiv2::ExifKey model("Exif.Image.Model");
-        Exiv2::ExifKey dateTime("Exif.Image.DateTime");
-        Exiv2::ExifKey exposureTime("Exif.Photo.ExposureTime");
-        Exiv2::ExifKey fnumber("Exif.Photo.FNumber");
-        Exiv2::ExifKey isoSpeedRatings("Exif.Photo.ISOSpeedRatings");
-        Exiv2::ExifKey flash("Exif.Photo.Flash");
-        Exiv2::ExifKey focalLength("Exif.Photo.FocalLength");
-        Exiv2::ExifKey userComment("Exif.Photo.UserComment");
-
-        Exiv2::ExifData::const_iterator it;
-
-        it = exifData.findKey(make);
-        if(it != exifData.end() /* && it->count() */)
-            exifTags.insert(QObject::tr("Make"), QString::fromStdString(it->value().toString()));
-
-        it = exifData.findKey(model);
-        if(it != exifData.end())
-            exifTags.insert(QObject::tr("Model"), QString::fromStdString(it->value().toString()));
-
-        it = exifData.findKey(dateTime);
-        if(it != exifData.end())
-            exifTags.insert(QObject::tr("Date/Time"), QString::fromStdString(it->value().toString()));
-
-        it = exifData.findKey(exposureTime);
-        if(it != exifData.end()) {
-            Exiv2::Rational r = it->toRational();
-            if(r.first < r.second) {
-                qreal exp = round(static_cast<qreal>(r.second) / r.first);
-                exifTags.insert(QObject::tr("ExposureTime"), "1/" + QString::number(exp) + QObject::tr(" sec"));
-            } else {
-                qreal exp = round(static_cast<qreal>(r.first) / r.second);
-                exifTags.insert(QObject::tr("ExposureTime"), QString::number(exp) + QObject::tr(" sec"));
-            }
-        }
-
-        it = exifData.findKey(fnumber);
-        if(it != exifData.end()) {
-            Exiv2::Rational r = it->toRational();
-            qreal fn = static_cast<qreal>(r.first) / r.second;
-            exifTags.insert(QObject::tr("F Number"), "f/" + QString::number(fn, 'g', 3));
-        }
-
-        it = exifData.findKey(isoSpeedRatings);
-        if(it != exifData.end())
-            exifTags.insert(QObject::tr("ISO Speed ratings"), QString::fromStdString(it->value().toString()));
-
-        it = exifData.findKey(flash);
-        if(it != exifData.end())
-            exifTags.insert(QObject::tr("Flash"), QString::fromStdString(it->value().toString()));
-
-        it = exifData.findKey(focalLength);
-        if(it != exifData.end()) {
-            Exiv2::Rational r = it->toRational();
-            qreal fn = static_cast<qreal>(r.first) / r.second;
-            exifTags.insert(QObject::tr("Focal Length"), QString::number(fn, 'g', 3) + QObject::tr(" mm"));
-        }
-
-        it = exifData.findKey(userComment);
-        if(it != exifData.end()) {
-            // crop out 'charset=ascii' etc"
-            auto comment = QString::fromStdString(it->value().toString());
-            if(comment.startsWith("charset="))
-                comment.remove(0, comment.indexOf(" ") + 1);
-            exifTags.insert(QObject::tr("UserComment"), comment);
         }
     }
 

@@ -38,6 +38,8 @@ private:
     QSizeGrip *sizeGrip;
     bool userResized;   // user resized the panel -> stop re-adapting its size
     bool userMoved;     // user dragged the panel -> keep its position
-    bool dragging;      // header drag in progress
-    QPoint dragGrabPoint; // grab offset (overlay coords) for the header drag
+    bool dragging;    // header drag in progress
+    // constant offset between the global mouse position and the panel's
+    // top-left corner, recorded on press (standard drag algorithm)
+    QPoint dragOffset;
 };

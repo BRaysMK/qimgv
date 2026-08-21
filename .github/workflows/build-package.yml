@@ -32,6 +32,7 @@ jobs:
           export BUILD_NAME="qimgv-x64_$(git describe --tags)"
           echo "build_name=${BUILD_NAME}" >> $GITHUB_OUTPUT
           echo "build_file_name=${BUILD_NAME}.7z" >> $GITHUB_OUTPUT
+          echo "installer_file_name=${BUILD_NAME}.exe" >> $GITHUB_OUTPUT
           ./scripts/build-qimgv.sh
           pwd
           ls -al
@@ -41,11 +42,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: qimgv-build
-          path: qimgv-x64.7z
+          path: |
+            qimgv-x64.7z
+            qimgv-x64_*.exe
 
     outputs:
        build_name: ${{ steps.build.outputs.build_name }}
        build_file_name: ${{ steps.build.outputs.build_file_name }}
+       installer_file_name: ${{ steps.build.outputs.installer_file_name }}
 
   upload-release:
     runs-on: ubuntu-latest
@@ -62,7 +66,9 @@ jobs:
        - uses: softprops/action-gh-release@v2
          #if: startsWith(github.ref, 'refs/tags/')
          with:
-           files: ${{ needs.build.outputs.build_file_name }}
+           files: |
+             ${{ needs.build.outputs.build_file_name }}
+             ${{ needs.build.outputs.installer_file_name }}
            prerelease: true
            tag_name: latest-dev
            name: ${{ needs.build.outputs.build_name }}

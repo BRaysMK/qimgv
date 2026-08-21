@@ -169,10 +169,13 @@ bool ImageInfoOverlay::eventFilter(QObject *obj, QEvent *event) {
             if(me->button() == Qt::LeftButton) {
                 dragging = true;
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-                dragGrabPoint = mapFromGlobal(me->globalPosition().toPoint());
+                QPoint g = me->globalPosition().toPoint();
 #else
-                dragGrabPoint = mapFromGlobal(me->globalPos());
+                QPoint g = me->globalPos();
 #endif
+                // constant: where the grab point sits relative to the panel's
+                // top-left corner (in global coordinates)
+                dragOffset = g - geometry().topLeft();
                 grabMouse();
                 return true;
             }
@@ -203,9 +206,9 @@ void ImageInfoOverlay::mouseMoveEvent(QMouseEvent *event) {
     if(dragging) {
         QSize cs = containerSize();
 #if QT_VERSION >= QT_VERSION_CHECK(6,0,0)
-        QPoint p = mapFromGlobal(event->globalPosition().toPoint()) - dragGrabPoint;
+        QPoint p = event->globalPosition().toPoint() - dragOffset;
 #else
-        QPoint p = mapFromGlobal(event->globalPos()) - dragGrabPoint;
+        QPoint p = event->globalPos() - dragOffset;
 #endif
         p.setX(qBound(0, p.x(), qMax(0, cs.width() - width())));
         p.setY(qBound(0, p.y(), qMax(0, cs.height() - height())));

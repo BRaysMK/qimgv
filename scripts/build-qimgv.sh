@@ -266,3 +266,21 @@ done
 
 cd $SRC_DIR
 echo "PACKAGING DONE"
+
+# ------------------------------------------------------------------------------
+echo "BUILDING NSIS INSTALLER"
+# NSIS is not in the base msys2 image; install it now
+pacman -S --noconfirm --needed mingw-w64-x86_64-nsis
+VER=$(git describe --tags)
+# disable msys2 path conversion so the /D... defines reach makensis intact
+export MSYS2_ARG_CONV_EXCL='*'
+makensis.exe \
+    /DVER="$VER" \
+    /DBUILD_DIR="$(cygpath -w $PACKAGE_DIR)" \
+    /DAPP_ICON="$(cygpath -w $SRC_DIR/qimgv/res/icons/common/logo/app/qimgv.ico)" \
+    "$(cygpath -w $SCRIPTS_DIR/../packaging/qimgv-installer.nsi)"
+if [ ! -f "$SRC_DIR/qimgv-x64_$VER.exe" ]; then
+    echo "ERROR: NSIS installer build failed - qimgv-x64_$VER.exe not found"
+    exit 1
+fi
+echo "INSTALLER DONE: $SRC_DIR/qimgv-x64_$VER.exe"
