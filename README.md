@@ -4,7 +4,7 @@ qimgv | Current version: 1.0.2
 =====
 Image viewer. Fast, easy to use. Optional video support.
 
-Automated Windows builds are published to the [Releases](https://github.com/BRaysMK/qimgv/releases) page (tag `latest-dev`, prerelease) on every push to `master`.
+Automated Windows builds are published to the [Releases](https://github.com/BRaysMK/qimgv/releases) page (tag `latest-dev`, prerelease) after every push to `master`.
 
 ## Screenshots
 
