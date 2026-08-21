@@ -31,6 +31,10 @@ void EntryInfoItem::setInfo(QString _name, QString _value) {
     valueLabel.setToolTip(value);
 };
 
+void EntryInfoItem::setNameColumnWidth(int width) {
+    nameLabel.setFixedWidth(width);
+}
+
 void EntryInfoItem::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event)
     QStyleOption opt;

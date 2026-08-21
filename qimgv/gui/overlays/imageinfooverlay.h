@@ -3,6 +3,9 @@
 #include "gui/customwidgets/overlaywidget.h"
 #include "gui/customwidgets/entryinfoitem.h"
 #include <QWheelEvent>
+#include <QSizeGrip>
+#include <QMouseEvent>
+#include <QPoint>
 
 namespace Ui {
 class ImageInfoOverlay;
@@ -23,8 +26,18 @@ public slots:
 protected:
     void wheelEvent(QWheelEvent *event);
     void recalculateGeometry() override;
+    void resizeEvent(QResizeEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *event) override;
+    bool eventFilter(QObject *obj, QEvent *event) override;
+
 private:
     Ui::ImageInfoOverlay *ui;
     QList<EntryInfoItem*> entries;
     QLabel entryStub;
+    QSizeGrip *sizeGrip;
+    bool userResized;   // user resized the panel -> stop re-adapting its size
+    bool userMoved;     // user dragged the panel -> keep its position
+    bool dragging;      // header drag in progress
+    QPoint dragGrabPoint; // grab offset (overlay coords) for the header drag
 };

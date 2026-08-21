@@ -16,6 +16,7 @@ public:
     void setInfo(QString _name, QString _value);
     QString entryName() const { return name; }
     QString entryValue() const { return value; }
+    void setNameColumnWidth(int width);
 
 protected:
     void paintEvent(QPaintEvent *event);

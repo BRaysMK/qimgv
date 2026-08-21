@@ -208,6 +208,23 @@ static QString localizedTagName(const QString &raw) {
         {"Image.ImageDescription", QStringLiteral("图像描述")},
         {"Image.Make", QStringLiteral("相机制造商")},
         {"Image.Model", QStringLiteral("相机型号")},
+        {"Image.ExifTag", QStringLiteral("Exif指针")},
+        {"Image.GPSTag", QStringLiteral("GPS指针")},
+        {"Image.XPTitle", QStringLiteral("XP标题")},
+        {"Image.XPComment", QStringLiteral("XP注释")},
+        {"Image.XPAuthor", QStringLiteral("XP作者")},
+        {"Image.XPKeywords", QStringLiteral("XP关键字")},
+        {"Image.XPSubject", QStringLiteral("XP主题")},
+        {"Image.YCbCrPositioning", QStringLiteral("YCbCr分量位置")},
+        {"Image.YCbCrSubSampling", QStringLiteral("YCbCr子采样")},
+        {"Image.TransferFunction", QStringLiteral("传输函数")},
+        {"Image.WhitePoint", QStringLiteral("白点")},
+        {"Image.PrimaryChromaticities", QStringLiteral("原色色度")},
+        {"Image.ReferenceBlackWhite", QStringLiteral("黑白参考值")},
+        {"Image.DocumentName", QStringLiteral("文档名称")},
+        {"Image.HostComputer", QStringLiteral("主机名")},
+        {"Image.ProfileType", QStringLiteral("配置文件类型")},
+        {"Image.PlanarConfiguration", QStringLiteral("平面配置")},
         // --- Exif.Photo ---
         {"Photo.ExposureTime", QStringLiteral("曝光时间")},
         {"Photo.FNumber", QStringLiteral("光圈数")},
@@ -268,6 +285,11 @@ static QString localizedTagName(const QString &raw) {
         {"Photo.CameraOwnerName", QStringLiteral("相机所有者")},
         {"Photo.BodySerialNumber", QStringLiteral("机身序列号")},
         {"Photo.LensSerialNumber", QStringLiteral("镜头序列号")},
+        {"Photo.InteroperabilityTag", QStringLiteral("互操作性指针")},
+        {"Photo.DeviceSettingDescription", QStringLiteral("设备设置描述")},
+        {"Photo.OECF", QStringLiteral("光电转换函数(OECF)")},
+        {"Photo.SpectralSensitivity", QStringLiteral("光谱灵敏度")},
+        {"Photo.SpatialFrequencyResponse", QStringLiteral("空间频率响应")},
         // --- Exif.GPSInfo ---
         {"GPSInfo.GPSVersionID", QStringLiteral("GPS版本")},
         {"GPSInfo.GPSLatitudeRef", QStringLiteral("纬度方向")},
@@ -300,6 +322,12 @@ static QString localizedTagName(const QString &raw) {
         {"GPSInfo.GPSAreaInformation", QStringLiteral("GPS区域信息")},
         {"GPSInfo.GPSDateStamp", QStringLiteral("GPS日期")},
         {"GPSInfo.GPSHPositioningError", QStringLiteral("GPS定位误差")},
+        // --- Exif.Iop (Interoperability) ---
+        {"Iop.InteroperabilityIndex", QStringLiteral("互操作性索引")},
+        {"Iop.InteroperabilityVersion", QStringLiteral("互操作性版本")},
+        {"Iop.RelatedImageFileFormat", QStringLiteral("相关图像文件格式")},
+        {"Iop.RelatedImageWidth", QStringLiteral("相关图像宽度")},
+        {"Iop.RelatedImageLength", QStringLiteral("相关图像高度")},
         // --- Exif.Thumbnail ---
         {"Thumbnail.ImageWidth", QStringLiteral("缩略图宽度")},
         {"Thumbnail.ImageLength", QStringLiteral("缩略图高度")},
@@ -307,7 +335,11 @@ static QString localizedTagName(const QString &raw) {
         {"Thumbnail.XResolution", QStringLiteral("缩略图水平分辨率")},
         {"Thumbnail.YResolution", QStringLiteral("缩略图垂直分辨率")},
         {"Thumbnail.JPEGInterchangeFormat", QStringLiteral("缩略图偏移")},
-        {"Thumbnail.JPEGInterchangeFormatLength", QStringLiteral("缩略图长度")}
+        {"Thumbnail.JPEGInterchangeFormatLength", QStringLiteral("缩略图长度")},
+        {"Thumbnail.ResolutionUnit", QStringLiteral("缩略图分辨率单位")},
+        {"Thumbnail.Orientation", QStringLiteral("缩略图方向")},
+        {"Thumbnail.BitsPerSample", QStringLiteral("缩略图每样本位数")},
+        {"Thumbnail.SamplesPerPixel", QStringLiteral("缩略图每像素样本数")}
     };
     return names.value(raw, raw);
 }
