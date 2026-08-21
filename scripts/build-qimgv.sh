@@ -64,8 +64,9 @@ rm mpv-x64.7z
 
 # ------------------------------------------------------------------------------
 echo "BUILDING EXIV2 (not available in the mingw64 repo; building from source)"
+# v0.27.x: matches the API qimgv was written against (open(std::wstring), libexiv2-27.dll)
 cd $EXT_DIR
-git clone --depth 1 --branch v0.28.8 https://github.com/Exiv2/exiv2.git
+git clone --depth 1 --branch v0.27.7 https://github.com/Exiv2/exiv2.git
 cd exiv2
 rm -rf build
 cmake -S . -B build -G Ninja \
@@ -217,7 +218,17 @@ MSYS_DLLS=$(grep -v '^libexiv2-27.dll' $BUILD_DIR/msys2-dll-deps.txt | tr '\n' '
 cd $MSYS_DIR/bin
 cp $MSYS_DLLS $PACKAGE_DIR
 # exiv2 was built from source; copy its runtime dll
-cp $MSYS_DIR/bin/libexiv2-28.dll $PACKAGE_DIR
+cp $MSYS_DIR/bin/libexiv2-27.dll $PACKAGE_DIR
+
+# Copy every runtime dependency reported by ldd (covers stale dll lists and
+# version bumps in the msys2 packages)
+for f in $(find $PACKAGE_DIR ( -name "*.dll" -o -name "*.exe" )); do
+    for d in $(ldd "$f" 2>/dev/null | grep '=>' | awk '{print $1}'); do
+        if [ -f "$MSYS_DIR/bin/$d" ] && [ ! -f "$PACKAGE_DIR/$d" ]; then
+            cp "$MSYS_DIR/bin/$d" "$PACKAGE_DIR"
+        fi
+    done
+done
 
 # 4 - copy imageformats
 cp $EXT_DIR/qt-jpegxl-image-plugin/build/bin/imageformats/libqjpegxl5.dll $PACKAGE_DIR/imageformats
