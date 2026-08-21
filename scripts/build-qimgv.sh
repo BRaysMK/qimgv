@@ -222,16 +222,6 @@ cp $MSYS_DLLS $PACKAGE_DIR
 # exiv2 was built from source; copy its runtime dll (MinGW names it libexiv2.dll)
 cp $MSYS_DIR/bin/libexiv2.dll $PACKAGE_DIR
 
-# Copy every runtime dependency reported by ldd (covers stale dll lists and
-# version bumps in the msys2 packages)
-for f in $(find $PACKAGE_DIR -name "*.dll" -o -name "*.exe"); do
-    for d in $(ldd "$f" 2>/dev/null | grep '=>' | awk '{print $1}'); do
-        if [ -f "$MSYS_DIR/bin/$d" ] && [ ! -f "$PACKAGE_DIR/$d" ]; then
-            cp "$MSYS_DIR/bin/$d" "$PACKAGE_DIR"
-        fi
-    done
-done
-
 # 4 - copy imageformats
 cp $EXT_DIR/qt-jpegxl-image-plugin/build/bin/imageformats/libqjpegxl5.dll $PACKAGE_DIR/imageformats
 cp $EXT_DIR/qt-avif-image-plugin/build/bin/imageformats/libqavif5.dll $PACKAGE_DIR/imageformats
@@ -250,6 +240,22 @@ mkdir $PACKAGE_DIR/cache
 mkdir $PACKAGE_DIR/conf
 mkdir $PACKAGE_DIR/thumbnails
 cp -r $SRC_DIR/qimgv/distrib/mimedata/data $PACKAGE_DIR
+
+# Copy every runtime dependency reported by ldd (covers stale dll lists and
+# version bumps in the msys2 packages). Runs after ALL copies so plugin dlls
+# are included; repeats until stable so transitive deps are picked up too.
+for pass in 1 2 3 4 5 6 7 8; do
+    added=0
+    for f in $(find $PACKAGE_DIR -name "*.dll" -o -name "*.exe"); do
+        for d in $(ldd "$f" 2>/dev/null | grep '=>' | awk '{print $1}'); do
+            if [ -f "$MSYS_DIR/bin/$d" ] && [ ! -f "$PACKAGE_DIR/$d" ]; then
+                cp "$MSYS_DIR/bin/$d" "$PACKAGE_DIR"
+                added=1
+            fi
+        done
+    done
+    [ "$added" = "0" ] && break
+done
 
 cd $SRC_DIR
 echo "PACKAGING DONE"
