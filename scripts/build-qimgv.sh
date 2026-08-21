@@ -1,7 +1,4 @@
 #!/bin/bash
-# Fail fast: a broken build must abort instead of producing a package
-# without qimgv.exe (that used to get uploaded as a release).
-set -e
 # This builds a complete qimgv-x64 package. Result is placed in qimgv/qimgv-x64_<version>
 # Warning: Some stuff will be left over behind after building (C:/qt and C:/opencv-4.5.5-minimal)
 
@@ -128,6 +125,13 @@ cmake -S $SRC_DIR -B $BUILD_DIR -G Ninja \
     -DMPV_DIR=$MPV_DIR \
     -DCMAKE_CXX_FLAGS="$CFL" -DCMAKE_EXE_LINKER_FLAGS="$LDFL"
 ninja -C $BUILD_DIR
+
+# Fail fast: a broken qimgv build must abort instead of producing a package
+# without qimgv.exe (that used to get uploaded as a release).
+# Note: we deliberately do NOT use 'set -e' here - the mingw32-make steps for
+# some imageformat plugins return non-zero because the slim Qt lacks the
+# "testlib" module, even though the plugin DLLs build fine.
+test -f $BUILD_DIR/qimgv/qimgv.exe || { echo "ERROR: qimgv build failed - qimgv.exe not found"; exit 1; }
 
 # ------------------------------------------------------------------------------
 echo "BUILDING IMAGEFORMATS"
