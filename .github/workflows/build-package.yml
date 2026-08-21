@@ -4,6 +4,10 @@ on:
     branches:
       - master
   workflow_dispatch:
+
+# required so the workflow's GITHUB_TOKEN can create/update the release
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: windows-latest

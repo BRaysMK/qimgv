@@ -33,7 +33,9 @@ wget --progress=dot:mega -O $BUILD_DIR/msys2-dll-deps.txt https://raw.githubuser
 
 # ------------------------------------------------------------------------------
 echo "INSTALLING MSYS2 BUILD DEPS"
-MSYS_DEPS=$(cat $BUILD_DIR/msys2-build-deps.txt | sed 's/\n/ /')
+# exiv2 is no longer packaged in the mingw64 MSYS2 repo (it moved to
+# ucrt64/clang64). It is filtered out here and built from source below.
+MSYS_DEPS=$(grep -v '^mingw-w64-x86_64-exiv2' $BUILD_DIR/msys2-build-deps.txt | tr '\n' ' ')
 pacman -S $MSYS_DEPS --noconfirm --needed
 
 # ------------------------------------------------------------------------------
@@ -59,6 +61,32 @@ cd $MPV_DIR
 wget --progress=dot:mega -O mpv-x64.7z https://github.com/easymodo/qimgv-deps-bin/releases/download/x64/mpv-x86_64-20230402-git-0f13c38.7z
 7z x mpv-x64.7z -y
 rm mpv-x64.7z
+
+# ------------------------------------------------------------------------------
+echo "BUILDING EXIV2 (not available in the mingw64 repo; building from source)"
+cd $EXT_DIR
+git clone --depth 1 --branch v0.28.8 https://github.com/Exiv2/exiv2.git
+cd exiv2
+rm -rf build
+cmake -S . -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=$MSYS_DIR \
+    -DEXIV2_BUILD_SAMPLES=OFF \
+    -DEXIV2_BUILD_EXIV2_COMMAND=OFF \
+    -DEXIV2_BUILD_DOC=OFF \
+    -DEXIV2_BUILD_UNIT_TESTS=OFF \
+    -DEXIV2_ENABLE_BMFF=OFF \
+    -DEXIV2_ENABLE_VIDEO=OFF \
+    -DEXIV2_ENABLE_PNG=OFF \
+    -DEXIV2_ENABLE_WEBREADY=OFF \
+    -DEXIV2_ENABLE_XMP=OFF \
+    -DEXIV2_ENABLE_EXTERNAL_XMP=OFF \
+    -DEXIV2_ENABLE_CURL=OFF \
+    -DEXIV2_ENABLE_SSH=OFF \
+    -DEXIV2_ENABLE_INIH=OFF \
+    -DEXIV2_ENABLE_BROTLI=OFF
+ninja -C build
+ninja -C build install
 
 # ------------------------------------------------------------------------------
 # We are using prebuilt opencv but feel free to compile instead
@@ -185,9 +213,11 @@ mkdir $PACKAGE_DIR/platforms
 cp platforms/qwindows.dll $PACKAGE_DIR/platforms
 
 # 3 - copy msys dlls
-MSYS_DLLS=$(cat $BUILD_DIR/msys2-dll-deps.txt | sed 's/\n/ /')
+MSYS_DLLS=$(grep -v '^libexiv2-27.dll' $BUILD_DIR/msys2-dll-deps.txt | tr '\n' ' ')
 cd $MSYS_DIR/bin
 cp $MSYS_DLLS $PACKAGE_DIR
+# exiv2 was built from source; copy its runtime dll
+cp $MSYS_DIR/bin/libexiv2-28.dll $PACKAGE_DIR
 
 # 4 - copy imageformats
 cp $EXT_DIR/qt-jpegxl-image-plugin/build/bin/imageformats/libqjpegxl5.dll $PACKAGE_DIR/imageformats
