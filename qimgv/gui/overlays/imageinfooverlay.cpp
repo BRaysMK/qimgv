@@ -86,7 +86,7 @@ void ImageInfoOverlay::recalculateGeometry() {
     int valueW = 160;
     QFontMetrics fm(entryStub.font());
     for(EntryInfoItem *e : entries) {
-        valueW = qMax(valueW, fm.horizontalAdvance(e->value()) + 8);
+        valueW = qMax(valueW, fm.horizontalAdvance(e->entryValue()) + 8);
     }
     valueW = qBound(160, valueW, 360);
     int width = qBound(360, nameW + valueW + 36, 560);

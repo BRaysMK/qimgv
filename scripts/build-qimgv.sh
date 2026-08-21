@@ -1,4 +1,7 @@
 #!/bin/bash
+# Fail fast: a broken build must abort instead of producing a package
+# without qimgv.exe (that used to get uploaded as a release).
+set -e
 # This builds a complete qimgv-x64 package. Result is placed in qimgv/qimgv-x64_<version>
 # Warning: Some stuff will be left over behind after building (C:/qt and C:/opencv-4.5.5-minimal)
 
