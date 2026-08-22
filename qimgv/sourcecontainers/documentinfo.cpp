@@ -1,6 +1,7 @@
 #include "documentinfo.h"
 #include <QStringList>
 #include <QHash>
+#include <QRegularExpression>
 
 DocumentInfo::DocumentInfo(QString path)
     : mDocumentType(DocumentType::NONE),
@@ -347,6 +348,37 @@ static QString localizedTagName(const QString &raw) {
     return names.value(raw, raw);
 }
 
+// Friendly formatting for a few raw exiv2 values:
+// - DateTime fields use "YYYY:MM:DD HH:MM:SS" (colons are the EXIF standard);
+//   show them as "YYYY-MM-DD HH:MM:SS" instead.
+// - GPS coordinates are rational arrays in exiv2 0.27 ("23/1 14/1 3080/100",
+//   slash-separated); show "23°14'30.80"" (degrees/minutes/seconds) instead.
+static QString formatExifValue(const QString &name, const QString &value) {
+    if(name == "Image.DateTime" || name == "Photo.DateTimeOriginal" || name == "Photo.DateTimeDigitized") {
+        static const QRegularExpression dateRe("^(\d{4}):(\d{2}):(\d{2})(.*)$");
+        QRegularExpressionMatch m = dateRe.match(value);
+        if(m.hasMatch())
+            return m.captured(1) + "-" + m.captured(2) + "-" + m.captured(3) + m.captured(4);
+    } else if(name == "GPSInfo.GPSLatitude" || name == "GPSInfo.GPSLongitude") {
+        // exiv2 0.27 rational-array form: "23/1 14/1 3080/100"
+        static const QRegularExpression fracRe("^(\d+)/(\d+)\s+(\d+)/(\d+)\s+([\d.]+)/(\d+)$");
+        QRegularExpressionMatch m = fracRe.match(value);
+        if(m.hasMatch()) {
+            double deg = m.captured(1).toDouble() / m.captured(2).toDouble();
+            double min = m.captured(3).toDouble() / m.captured(4).toDouble();
+            double sec = m.captured(5).toDouble() / m.captured(6).toDouble();
+            return QString::number(deg, 'f', 0) + "°" + QString::number(min, 'f', 0)
+                   + "'" + QString::number(sec, 'f', 2) + "\"";
+        }
+        // exiv2 0.28 degree form: "23 deg 14' 30.80""
+        static const QRegularExpression degRe("^(\d+(?:\.\d+)?)\s*(?:deg|d)\s*(\d+(?:\.\d+)?)'\s*([\d.]+)\"?$");
+        m = degRe.match(value);
+        if(m.hasMatch())
+            return m.captured(1) + "°" + m.captured(2) + "'" + m.captured(3) + "\"";
+    }
+    return value;
+}
+
 // Localize DJI drone flight-data XMP tags (tag name only).
 static QString localizedXmpTagName(const QString &tag) {
     static const QHash<QString, QString> names = {
@@ -370,7 +402,15 @@ static QString localizedXmpTagName(const QString &tag) {
         {"CamReverse", QStringLiteral("相机反转")},
         {"GimbalReverse", QStringLiteral("云台反转")},
         {"PictureQuality", QStringLiteral("图片质量")},
-        {"ShutterType", QStringLiteral("快门类型")}
+        {"ShutterType", QStringLiteral("快门类型")},
+        {"Version", QStringLiteral("版本")},
+        {"ImageSource", QStringLiteral("图像源")},
+        {"GpsStatus", QStringLiteral("GPS状态")},
+        {"AltitudeType", QStringLiteral("海拔类型")},
+        {"GpsLatitude", QStringLiteral("GPS纬度")},
+        {"GpsLongitude", QStringLiteral("GPS经度")},
+        {"CaptureUUID", QStringLiteral("拍摄UUID")},
+        {"SelfData", QStringLiteral("自身数据")}
     };
     return names.value(tag, tag);
 }
@@ -380,6 +420,7 @@ void DocumentInfo::loadExifTags() {
         return;
     exifLoaded = true;
     exifTags.clear();
+    xmpTags.clear();
 #ifdef USE_EXIV2
     try {
         std::unique_ptr<Exiv2::Image> image;
@@ -405,7 +446,7 @@ void DocumentInfo::loadExifTags() {
                 continue;
             if(value.size() > 400)
                 value = value.left(400) + "…";
-            exifTags.insert(localizedTagName(name), value);
+            exifTags.insert(localizedTagName(name), formatExifValue(name, value));
         }
 
         // XMP: DJI drone flight data lives in the drone-dji namespace
@@ -418,8 +459,9 @@ void DocumentInfo::loadExifTags() {
             QString value = QString::fromStdString(datum.value().toString());
             if(value.isEmpty())
                 continue;
-            QString tag = QString::fromStdString(std::string(datum.tagName()));
-            exifTags.insert(localizedXmpTagName(tag), value);
+            // datum.tagName() is unreliable for XMP keys, take the last segment
+            QString tag = key.mid(key.lastIndexOf('.') + 1);
+            xmpTags.insert(localizedXmpTagName(tag), value);
         }
     }
 
@@ -449,6 +491,12 @@ QMap<QString, QString> DocumentInfo::getExifTags() {
     if(!exifLoaded)
         loadExifTags();
     return exifTags;
+}
+
+QMap<QString, QString> DocumentInfo::getXmpTags() {
+    if(!exifLoaded)
+        loadExifTags();
+    return xmpTags;
 }
 
 void DocumentInfo::loadExifOrientation() {

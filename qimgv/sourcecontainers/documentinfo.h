@@ -46,6 +46,7 @@ public:
     void refresh();
     void loadExifTags();
     QMap<QString, QString> getExifTags();
+    QMap<QString, QString> getXmpTags();
 
 private:
     QFileInfo fileInfo;
@@ -63,5 +64,6 @@ private:
     bool detectAnimatedJxl();
     bool detectAnimatedAvif();
     QMap<QString, QString> exifTags;
+    QMap<QString, QString> xmpTags;
     QMimeType mMimeType;
 };

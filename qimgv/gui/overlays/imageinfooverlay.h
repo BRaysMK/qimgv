@@ -6,6 +6,9 @@
 #include <QSizeGrip>
 #include <QMouseEvent>
 #include <QPoint>
+#include <QToolButton>
+#include <QVBoxLayout>
+#include <QWidget>
 
 namespace Ui {
 class ImageInfoOverlay;
@@ -18,7 +21,7 @@ class ImageInfoOverlay : public OverlayWidget
 public:
     explicit ImageInfoOverlay(FloatingWidgetContainer *parent = nullptr);
     ~ImageInfoOverlay();
-    void setExifInfo(QMap<QString, QString>);
+    void setExifInfo(QMap<QString, QString> info, QMap<QString, QString> xmpInfo);
 
 public slots:
     void show();
@@ -34,6 +37,10 @@ protected:
 private:
     Ui::ImageInfoOverlay *ui;
     QList<EntryInfoItem*> entries;
+    QList<EntryInfoItem*> xmpEntries;
+    QToolButton *xmpToggle;   // collapsible XMP section header
+    QWidget *xmpContainer;    // holds the XMP rows (hidden while collapsed)
+    QVBoxLayout *xmpLayout;
     QLabel entryStub;
     QSizeGrip *sizeGrip;
     bool userResized;   // user resized the panel -> stop re-adapting its size

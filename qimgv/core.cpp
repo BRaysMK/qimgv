@@ -1511,7 +1511,7 @@ void Core::guiSetImage(std::shared_ptr<Image> img) {
         mw->showVideo(video->filePath());
     }
     img->isEdited() ? mw->showSaveOverlay() : mw->hideSaveOverlay();
-    mw->setExifInfo(img->getExifTags());
+    mw->setExifInfo(img->getExifTags(), img->getXmpTags());
 }
 
 void Core::updateInfoString() {

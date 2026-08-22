@@ -55,3 +55,7 @@ QMap<QString, QString> Image::getExifTags() {
     return mDocInfo->getExifTags();
 }
 
+QMap<QString, QString> Image::getXmpTags() {
+    return mDocInfo->getXmpTags();
+}
+

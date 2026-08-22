@@ -28,6 +28,28 @@ ImageInfoOverlay::ImageInfoOverlay(FloatingWidgetContainer *parent) :
     sizeGrip->setCursor(Qt::SizeFDiagCursor);
     sizeGrip->installEventFilter(this);
 
+    // XMP section: collapsible, collapsed by default
+    xmpToggle = new QToolButton(this);
+    xmpToggle->setText(QStringLiteral("XMP 信息"));
+    xmpToggle->setCheckable(true);
+    xmpToggle->setChecked(false);
+    xmpToggle->setArrowType(Qt::RightArrow);
+    xmpToggle->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    xmpToggle->setStyleSheet("QToolButton { border: none; padding: 4px 6px; color: #999999; background: transparent; }");
+    xmpToggle->setVisible(false);
+
+    xmpContainer = new QWidget(this);
+    xmpLayout = new QVBoxLayout(xmpContainer);
+    xmpLayout->setContentsMargins(0, 0, 0, 0);
+    xmpLayout->setSpacing(0);
+    xmpContainer->setVisible(false);
+
+    connect(xmpToggle, &QToolButton::toggled, this, [this](bool on) {
+        xmpContainer->setVisible(on);
+        xmpToggle->setArrowType(on ? Qt::DownArrow : Qt::RightArrow);
+        recalculateGeometry();
+    });
+
     if(parent)
         setContainerSize(parent->size());
 }
@@ -36,9 +58,11 @@ ImageInfoOverlay::~ImageInfoOverlay() {
     delete ui;
     for(auto i = entries.count() - 1; i >= 0; i--)
         delete entries.takeAt(i);
+    for(auto i = xmpEntries.count() - 1; i >= 0; i--)
+        delete xmpEntries.takeAt(i);
 }
 
-void ImageInfoOverlay::setExifInfo(QMap<QString, QString> info) {
+void ImageInfoOverlay::setExifInfo(QMap<QString, QString> info, QMap<QString, QString> xmpInfo) {
     // remove/add entries
     int entryCount = entries.count();
     if(entryCount > info.count()) {
@@ -71,6 +95,30 @@ void ImageInfoOverlay::setExifInfo(QMap<QString, QString> info) {
         entryStub.setText(tr("<no metadata found>"));
     }
 
+    // XMP section (collapsible, collapsed by default): the XMP rows live in
+    // their own container under a toggle button.
+    while(xmpEntries.count() > xmpInfo.count()) {
+        xmpLayout->removeWidget(xmpEntries.last());
+        delete xmpEntries.takeLast();
+    }
+    while(xmpEntries.count() < xmpInfo.count()) {
+        xmpEntries.append(new EntryInfoItem(this));
+        xmpLayout->addWidget(xmpEntries.last());
+    }
+    QMap<QString, QString>::const_iterator xi = xmpInfo.constBegin();
+    int xidx = 0;
+    while(xi != xmpInfo.constEnd()) {
+        xmpEntries.at(xidx)->setInfo(xi.key(), xi.value());
+        ++xi;
+        ++xidx;
+    }
+    bool hasXmp = !xmpInfo.isEmpty();
+    xmpToggle->setVisible(hasXmp);
+    xmpContainer->setVisible(hasXmp && xmpToggle->isChecked());
+    // keep the XMP section below the EXIF rows (moves it to the layout end)
+    ui->entryLayout->addWidget(xmpToggle);
+    ui->entryLayout->addWidget(xmpContainer);
+
     // always recompute geometry so the panel adapts to the (possibly empty) content
     recalculateGeometry();
 }
@@ -94,8 +142,14 @@ void ImageInfoOverlay::recalculateGeometry() {
     // resized the panel manually
     QSize wanted = size();
     if(!userResized) {
-        // adaptive height: header + as many rows as fit on screen (scroll beyond)
-        int contentH = entries.count() ? entries.count() * entryHeight : 50;
+        // adaptive height: EXIF rows + the XMP toggle row + expanded XMP rows
+        int contentH = entries.count() * entryHeight;
+        if(xmpToggle->isVisible())
+            contentH += entryHeight;                     // the XMP toggle row
+        if(xmpContainer->isVisible())
+            contentH += xmpEntries.count() * entryHeight;
+        if(!contentH)
+            contentH = 50;
         int cap = qMax(120, cs.height() - 90);
         int scrollH = qBound(entryHeight, contentH, cap - headerHeight);
 
@@ -108,6 +162,12 @@ void ImageInfoOverlay::recalculateGeometry() {
             nameW = qMax(nameW, fm.horizontalAdvance(e->entryName()) + 10);
             valueW = qMax(valueW, fm.horizontalAdvance(e->entryValue()) + 8);
         }
+        if(xmpContainer->isVisible()) {
+            for(EntryInfoItem *e : xmpEntries) {
+                nameW = qMax(nameW, fm.horizontalAdvance(e->entryName()) + 10);
+                valueW = qMax(valueW, fm.horizontalAdvance(e->entryValue()) + 8);
+            }
+        }
         nameW = qBound(170, nameW, 260);
         valueW = qBound(180, valueW, 520);
         int width = qBound(460, nameW + valueW + 36, 800);
@@ -115,6 +175,10 @@ void ImageInfoOverlay::recalculateGeometry() {
         // apply the name column width so names are not truncated
         for(EntryInfoItem *e : entries)
             e->setNameColumnWidth(nameW);
+        if(xmpContainer->isVisible()) {
+            for(EntryInfoItem *e : xmpEntries)
+                e->setNameColumnWidth(nameW);
+        }
 
         wanted = QSize(width, headerHeight + scrollH + bottomMargin);
     }
