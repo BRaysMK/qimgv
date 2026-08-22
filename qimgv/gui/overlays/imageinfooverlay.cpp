@@ -2,6 +2,41 @@
 #include "ui_imageinfooverlay.h"
 #include <QFontMetrics>
 
+// QSizeGrip resizes the *top-level* window by default. This overlay lives
+// inside the viewer, so a plain QSizeGrip would resize the whole app window
+// when the user drags the corner. This subclass only resizes the overlay it
+// lives in (and clamps to its minimum size).
+class PanelSizeGrip : public QSizeGrip {
+public:
+    explicit PanelSizeGrip(QWidget *parent) : QSizeGrip(parent) {}
+protected:
+    void mousePressEvent(QMouseEvent *e) override {
+        QSizeGrip::mousePressEvent(e);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        mLastGlobal = e->globalPosition().toPoint();
+#else
+        mLastGlobal = e->globalPos();
+#endif
+    }
+    void mouseMoveEvent(QMouseEvent *e) override {
+        QWidget *p = parentWidget();
+        if(!p)
+            return;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        const QPoint g = e->globalPosition().toPoint();
+#else
+        const QPoint g = e->globalPos();
+#endif
+        const QPoint delta = g - mLastGlobal;
+        mLastGlobal = g;
+        int w = qMax(p->minimumWidth(), p->width() + delta.x());
+        int h = qMax(p->minimumHeight(), p->height() + delta.y());
+        p->resize(w, h);
+    }
+private:
+    QPoint mLastGlobal;
+};
+
 ImageInfoOverlay::ImageInfoOverlay(FloatingWidgetContainer *parent) :
     OverlayWidget(parent),
     ui(new Ui::ImageInfoOverlay),
@@ -23,8 +58,8 @@ ImageInfoOverlay::ImageInfoOverlay(FloatingWidgetContainer *parent) :
     ui->label->installEventFilter(this);
     ui->headerIcon->installEventFilter(this);
 
-    // resize handle: bottom-right corner
-    sizeGrip = new QSizeGrip(this);
+    // resize handle: bottom-right corner (resizes only this overlay)
+    sizeGrip = new PanelSizeGrip(this);
     sizeGrip->setCursor(Qt::SizeFDiagCursor);
     sizeGrip->installEventFilter(this);
 
