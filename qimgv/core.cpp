@@ -1511,7 +1511,13 @@ void Core::guiSetImage(std::shared_ptr<Image> img) {
         mw->showVideo(video->filePath());
     }
     img->isEdited() ? mw->showSaveOverlay() : mw->hideSaveOverlay();
-    mw->setExifInfo(img->getExifTags(), img->getXmpTags());
+    // Reading EXIF/XMP must never break the rest of the open flow: a malformed
+    // file must not leave the info bar stuck on "no file opened".
+    try {
+        mw->setExifInfo(img->getExifTags(), img->getXmpTags());
+    } catch(...) {
+        qDebug() << "Failed to read EXIF/XMP for" << state.currentFilePath;
+    }
 }
 
 void Core::updateInfoString() {

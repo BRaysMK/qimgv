@@ -426,8 +426,10 @@ void DocumentInfo::loadExifTags() {
         std::unique_ptr<Exiv2::Image> image;
 
         image = Exiv2::ImageFactory::open(toStdString(fileInfo.filePath()));
-
-        assert(image.get() != 0);
+        if(!image) {
+            qDebug() << "Could not open file for metadata reading:" << fileInfo.filePath();
+            return;
+        }
         image->readMetadata();
         Exiv2::ExifData &exifData = image->exifData();
 
@@ -482,6 +484,10 @@ void DocumentInfo::loadExifTags() {
 
     catch (Exiv2::Error& e) {
         qDebug() << "Caught Exiv2 exception:\n" << e.what() << "\n";
+        return;
+    }
+    catch(...) {
+        qDebug() << "Caught unexpected exception while reading metadata";
         return;
     }
 #endif
