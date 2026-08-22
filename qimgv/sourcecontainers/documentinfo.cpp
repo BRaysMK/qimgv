@@ -347,6 +347,34 @@ static QString localizedTagName(const QString &raw) {
     return names.value(raw, raw);
 }
 
+// Localize DJI drone flight-data XMP tags (tag name only).
+static QString localizedXmpTagName(const QString &tag) {
+    static const QHash<QString, QString> names = {
+        {"AbsoluteAltitude", QStringLiteral("绝对海拔")},
+        {"RelativeAltitude", QStringLiteral("相对海拔")},
+        {"GimbalRollDegree", QStringLiteral("云台横滚角")},
+        {"GimbalYawDegree", QStringLiteral("云台偏航角")},
+        {"GimbalPitchDegree", QStringLiteral("云台俯仰角")},
+        {"FlightRollDegree", QStringLiteral("飞行横滚角")},
+        {"FlightYawDegree", QStringLiteral("飞行偏航角")},
+        {"FlightPitchDegree", QStringLiteral("飞行俯仰角")},
+        {"FlightXSpeed", QStringLiteral("飞行X速度")},
+        {"FlightYSpeed", QStringLiteral("飞行Y速度")},
+        {"FlightZSpeed", QStringLiteral("飞行Z速度")},
+        {"DroneModel", QStringLiteral("无人机型号")},
+        {"DroneSerialNumber", QStringLiteral("无人机序列号")},
+        {"SurveyingMode", QStringLiteral("测绘模式")},
+        {"CalibratedFocalLength", QStringLiteral("校准焦距")},
+        {"CalibratedOpticalCenterX", QStringLiteral("校准光心X")},
+        {"CalibratedOpticalCenterY", QStringLiteral("校准光心Y")},
+        {"CamReverse", QStringLiteral("相机反转")},
+        {"GimbalReverse", QStringLiteral("云台反转")},
+        {"PictureQuality", QStringLiteral("图片质量")},
+        {"ShutterType", QStringLiteral("快门类型")}
+    };
+    return names.value(tag, tag);
+}
+
 void DocumentInfo::loadExifTags() {
     if(exifLoaded)
         return;
@@ -361,8 +389,6 @@ void DocumentInfo::loadExifTags() {
         assert(image.get() != 0);
         image->readMetadata();
         Exiv2::ExifData &exifData = image->exifData();
-        if(exifData.empty())
-            return;
 
         // Show every EXIF tag exactly as exiv2 reads it (raw value, localized
         // display name) - no hand-written formatting of our own. Two exceptions:
@@ -380,6 +406,20 @@ void DocumentInfo::loadExifTags() {
             if(value.size() > 400)
                 value = value.left(400) + "…";
             exifTags.insert(localizedTagName(name), value);
+        }
+
+        // XMP: DJI drone flight data lives in the drone-dji namespace
+        // (requires exiv2 to be built with XMP support).
+        Exiv2::XmpData &xmpData = image->xmpData();
+        for(const auto &datum : xmpData) {
+            QString key = QString::fromStdString(datum.key());
+            if(!key.startsWith("Xmp.drone-dji."))
+                continue;
+            QString value = QString::fromStdString(datum.value().toString());
+            if(value.isEmpty())
+                continue;
+            QString tag = QString::fromStdString(std::string(datum.tagName()));
+            exifTags.insert(localizedXmpTagName(tag), value);
         }
     }
 

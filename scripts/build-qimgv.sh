@@ -66,8 +66,11 @@ rm mpv-x64.7z
 echo "BUILDING EXIV2 (not available in the mingw64 repo; building from source)"
 # v0.27.x: matches the API qimgv was written against (open(std::wstring));
 # EXIV2_ENABLE_WIN_UNICODE=ON is required or the std::wstring overload is not built
+# XMP support (EXIV2_ENABLE_XMP, default ON) needs the bundled xmp-sdk
+# submodule, hence --recurse-submodules; it is used to read DJI flight data
+# (Xmp.drone-dji.*).
 cd $EXT_DIR
-git clone --depth 1 --branch v0.27.7 https://github.com/Exiv2/exiv2.git
+git clone --depth 1 --branch v0.27.7 --recurse-submodules https://github.com/Exiv2/exiv2.git
 cd exiv2
 rm -rf build
 cmake -S . -B build -G Ninja \
@@ -81,7 +84,6 @@ cmake -S . -B build -G Ninja \
     -DEXIV2_ENABLE_VIDEO=OFF \
     -DEXIV2_ENABLE_PNG=OFF \
     -DEXIV2_ENABLE_WEBREADY=OFF \
-    -DEXIV2_ENABLE_XMP=OFF \
     -DEXIV2_ENABLE_EXTERNAL_XMP=OFF \
     -DEXIV2_ENABLE_CURL=OFF \
     -DEXIV2_ENABLE_SSH=OFF \
