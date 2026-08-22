@@ -4,6 +4,7 @@
 
 struct ImageInfoOverlayStateBuffer {
     QMap<QString, QString> info;
+    QMap<QString, QString> xmpInfo;
 };
 
 class ImageInfoOverlayProxy {
@@ -14,7 +15,7 @@ public:
     void show();
     void hide();
 
-    void setExifInfo(QMap<QString, QString> info);
+    void setExifInfo(QMap<QString, QString> info, QMap<QString, QString> xmpInfo);
     bool isHidden();
 private:
     FloatingWidgetContainer *container;
