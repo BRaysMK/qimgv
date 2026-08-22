@@ -355,13 +355,13 @@ static QString localizedTagName(const QString &raw) {
 //   slash-separated); show "23°14'30.80"" (degrees/minutes/seconds) instead.
 static QString formatExifValue(const QString &name, const QString &value) {
     if(name == "Image.DateTime" || name == "Photo.DateTimeOriginal" || name == "Photo.DateTimeDigitized") {
-        static const QRegularExpression dateRe("^(\d{4}):(\d{2}):(\d{2})(.*)$");
+        static const QRegularExpression dateRe("^(\\d{4}):(\\d{2}):(\\d{2})(.*)$");
         QRegularExpressionMatch m = dateRe.match(value);
         if(m.hasMatch())
             return m.captured(1) + "-" + m.captured(2) + "-" + m.captured(3) + m.captured(4);
     } else if(name == "GPSInfo.GPSLatitude" || name == "GPSInfo.GPSLongitude") {
         // exiv2 0.27 rational-array form: "23/1 14/1 3080/100"
-        static const QRegularExpression fracRe("^(\d+)/(\d+)\s+(\d+)/(\d+)\s+([\d.]+)/(\d+)$");
+        static const QRegularExpression fracRe("^(\\d+)/(\\d+)\\s+(\\d+)/(\\d+)\\s+([\\d.]+)/(\\d+)$");
         QRegularExpressionMatch m = fracRe.match(value);
         if(m.hasMatch()) {
             double deg = m.captured(1).toDouble() / m.captured(2).toDouble();
@@ -371,7 +371,7 @@ static QString formatExifValue(const QString &name, const QString &value) {
                    + "'" + QString::number(sec, 'f', 2) + "\"";
         }
         // exiv2 0.28 degree form: "23 deg 14' 30.80""
-        static const QRegularExpression degRe("^(\d+(?:\.\d+)?)\s*(?:deg|d)\s*(\d+(?:\.\d+)?)'\s*([\d.]+)\"?$");
+        static const QRegularExpression degRe("^(\\d+(?:\\.\\d+)?)\\s*(?:deg|d)\\s*(\\d+(?:\\.\\d+)?)'\\s*([\\d.]+)\"?$");
         m = degRe.match(value);
         if(m.hasMatch())
             return m.captured(1) + "°" + m.captured(2) + "'" + m.captured(3) + "\"";
