@@ -201,6 +201,9 @@ static QString localizedTagName(const QString &raw) {
         {"Image.XResolution", QStringLiteral("水平分辨率")},
         {"Image.YResolution", QStringLiteral("垂直分辨率")},
         {"Image.ResolutionUnit", QStringLiteral("分辨率单位")},
+        {"Image.NewSubfileType", QStringLiteral("子文件类型")},
+        {"Image.StripOffsets", QStringLiteral("数据偏移")},
+        {"Image.StripByteCounts", QStringLiteral("数据长度")},
         {"Image.Software", QStringLiteral("软件")},
         {"Image.DateTime", QStringLiteral("日期时间")},
         {"Image.Artist", QStringLiteral("作者")},
@@ -362,13 +365,20 @@ void DocumentInfo::loadExifTags() {
             return;
 
         // Show every EXIF tag exactly as exiv2 reads it (raw value, localized
-        // display name) - no hand-written formatting of our own.
+        // display name) - no hand-written formatting of our own. Two exceptions:
+        // 1) binary blobs (XML XMP packet, raw maker note bytes) would render as
+        //    a wall of numbers, so they are dropped;
+        // 2) over-long values are truncated defensively.
         for(const auto &datum : exifData) {
             QString name = QString::fromStdString(std::string(datum.groupName()))
                            + "." + QString::fromStdString(std::string(datum.tagName()));
+            if(name == "Image.XMLPacket" || name == "Photo.MakerNote")
+                continue;
             QString value = QString::fromStdString(datum.value().toString());
             if(value.isEmpty())
                 continue;
+            if(value.size() > 400)
+                value = value.left(400) + "…";
             exifTags.insert(localizedTagName(name), value);
         }
     }
