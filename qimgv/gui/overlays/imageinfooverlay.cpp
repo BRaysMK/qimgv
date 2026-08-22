@@ -51,7 +51,6 @@ ImageInfoOverlay::ImageInfoOverlay(FloatingWidgetContainer *parent) :
     entryStub.setFixedSize(300, 48);
     entryStub.setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
     connect(ui->closeButton,  &IconButton::clicked, this, &ImageInfoOverlay::hide);
-    this->setPosition(FloatingWidgetPosition::RIGHT);
 
     // drag handle: the header row (icon + title)
     ui->header->installEventFilter(this);
@@ -84,6 +83,10 @@ ImageInfoOverlay::ImageInfoOverlay(FloatingWidgetContainer *parent) :
         xmpToggle->setArrowType(on ? Qt::DownArrow : Qt::RightArrow);
         recalculateGeometry();
     });
+
+    // setPosition() triggers recalculateGeometry(), which reads the XMP
+    // members, so it must run after they exist (not in the init list / early).
+    this->setPosition(FloatingWidgetPosition::RIGHT);
 
     if(parent)
         setContainerSize(parent->size());
@@ -148,11 +151,15 @@ void ImageInfoOverlay::setExifInfo(QMap<QString, QString> info, QMap<QString, QS
         ++xidx;
     }
     bool hasXmp = !xmpInfo.isEmpty();
-    xmpToggle->setVisible(hasXmp);
-    xmpContainer->setVisible(hasXmp && xmpToggle->isChecked());
-    // keep the XMP section below the EXIF rows (moves it to the layout end)
-    ui->entryLayout->addWidget(xmpToggle);
-    ui->entryLayout->addWidget(xmpContainer);
+    if(xmpToggle) {
+        xmpToggle->setVisible(hasXmp);
+        if(xmpContainer)
+            xmpContainer->setVisible(hasXmp && xmpToggle->isChecked());
+        // keep the XMP section below the EXIF rows (moves it to the layout end)
+        ui->entryLayout->addWidget(xmpToggle);
+        if(xmpContainer)
+            ui->entryLayout->addWidget(xmpContainer);
+    }
 
     // always recompute geometry so the panel adapts to the (possibly empty) content
     recalculateGeometry();
@@ -179,9 +186,9 @@ void ImageInfoOverlay::recalculateGeometry() {
     if(!userResized) {
         // adaptive height: EXIF rows + the XMP toggle row + expanded XMP rows
         int contentH = entries.count() * entryHeight;
-        if(xmpToggle->isVisible())
+        if(xmpToggle && xmpToggle->isVisible())
             contentH += entryHeight;                     // the XMP toggle row
-        if(xmpContainer->isVisible())
+        if(xmpContainer && xmpContainer->isVisible())
             contentH += xmpEntries.count() * entryHeight;
         if(!contentH)
             contentH = 50;
@@ -197,7 +204,7 @@ void ImageInfoOverlay::recalculateGeometry() {
             nameW = qMax(nameW, fm.horizontalAdvance(e->entryName()) + 10);
             valueW = qMax(valueW, fm.horizontalAdvance(e->entryValue()) + 8);
         }
-        if(xmpContainer->isVisible()) {
+        if(xmpContainer && xmpContainer->isVisible()) {
             for(EntryInfoItem *e : xmpEntries) {
                 nameW = qMax(nameW, fm.horizontalAdvance(e->entryName()) + 10);
                 valueW = qMax(valueW, fm.horizontalAdvance(e->entryValue()) + 8);
@@ -210,7 +217,7 @@ void ImageInfoOverlay::recalculateGeometry() {
         // apply the name column width so names are not truncated
         for(EntryInfoItem *e : entries)
             e->setNameColumnWidth(nameW);
-        if(xmpContainer->isVisible()) {
+        if(xmpContainer && xmpContainer->isVisible()) {
             for(EntryInfoItem *e : xmpEntries)
                 e->setNameColumnWidth(nameW);
         }

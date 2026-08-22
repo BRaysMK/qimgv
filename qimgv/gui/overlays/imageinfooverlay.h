@@ -38,9 +38,9 @@ private:
     Ui::ImageInfoOverlay *ui;
     QList<EntryInfoItem*> entries;
     QList<EntryInfoItem*> xmpEntries;
-    QToolButton *xmpToggle;   // collapsible XMP section header
-    QWidget *xmpContainer;    // holds the XMP rows (hidden while collapsed)
-    QVBoxLayout *xmpLayout;
+    QToolButton *xmpToggle = nullptr;   // collapsible XMP section header
+    QWidget *xmpContainer = nullptr;    // holds the XMP rows (hidden while collapsed)
+    QVBoxLayout *xmpLayout = nullptr;
     QLabel entryStub;
     QSizeGrip *sizeGrip;
     bool userResized;   // user resized the panel -> stop re-adapting its size
