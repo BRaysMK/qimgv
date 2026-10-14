@@ -1,9 +1,11 @@
 ; qimgv Windows installer (NSIS / MUI2)
 ;
 ; Usage:
-;   makensis /DVER=1.0.3-alpha-179 /DBUILD_DIR=./qimgv-x64_v1.0.3-alpha-179-g5bb87ff8 qimgv-installer.nsi
+;   makensis /DVER=1.0.4 /DVERNUM=1.0.4.0 /DBUILD_DIR=./qimgv-x64_v1.0.4 qimgv-installer.nsi
 ;
 ;   VER       - version string used for the output file name (qimgv-x64_<VER>.exe)
+;   VERNUM    - numeric X.X.X.X version for the installer's version resource
+;               (derived from the app version by scripts/build-qimgv.sh)
 ;   BUILD_DIR - path to the portable build directory whose contents get installed
 ;   APP_ICON  - path to the qimgv icon (.ico), optional
 
@@ -18,6 +20,10 @@
 !endif
 !ifndef APP_ICON
   !define APP_ICON "..\qimgv\res\icons\common\logo\app\qimgv.ico"
+!endif
+; numeric version for VIProductVersion; must be exactly X.X.X.X
+!ifndef VERNUM
+  !define VERNUM "1.0.4.0"
 !endif
 
 Name "qimgv"
@@ -51,7 +57,7 @@ ShowUninstDetails show
 !insertmacro MUI_LANGUAGE "SimpChinese"
 !insertmacro MUI_LANGUAGE "English"
 
-VIProductVersion "1.0.3.0"
+VIProductVersion "${VERNUM}"
 VIAddVersionKey "ProductName" "qimgv"
 VIAddVersionKey "FileDescription" "qimgv - free image viewer"
 VIAddVersionKey "FileVersion" "${VER}"

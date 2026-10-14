@@ -274,6 +274,17 @@ echo "BUILDING NSIS INSTALLER"
 # NSIS is not in the base msys2 image; install it now
 pacman -S --noconfirm --needed mingw-w64-x86_64-nsis
 VER=$(git describe --tags)
+# numeric version for the installer's version resource; must be exactly X.X.X.X.
+# Take the app version from appversion.cpp (the git describe string can contain
+# a tag suffix like "v1.0.3-6-gc8232e22", which is not a valid numeric version).
+APP_VER=$(sed -n 's/.*appVersion[[:space:]]*([[:space:]]*\([0-9][0-9]*\)[[:space:]]*,[[:space:]]*\([0-9][0-9]*\)[[:space:]]*,[[:space:]]*\([0-9][0-9]*\)[[:space:]]*).*/\1.\2.\3/p' "$SRC_DIR/qimgv/appversion.cpp" | head -1)
+if [ -n "$APP_VER" ]; then
+    VERNUM="$APP_VER.0"
+else
+    echo "WARNING: could not parse appVersion; falling back to 0.0.0.0"
+    VERNUM="0.0.0.0"
+fi
+echo "installer version: VER=$VER VERNUM=$VERNUM"
 NSIS_SCRIPT="$SCRIPTS_DIR/../packaging/qimgv-installer.nsi"
 # add a UTF-8 BOM so makensis reads the Chinese strings correctly
 # (the CI runner is en-US; without a BOM makensis decodes the .nsi as ACP)
@@ -282,6 +293,7 @@ sed -i '1s/^/\xef\xbb\xbf/' "$NSIS_SCRIPT"
 export MSYS2_ARG_CONV_EXCL='*'
 makensis.exe \
     /DVER="$VER" \
+    /DVERNUM="$VERNUM" \
     /DBUILD_DIR="$(cygpath -w $PACKAGE_DIR)" \
     /DAPP_ICON="$(cygpath -w $SRC_DIR/qimgv/res/icons/common/logo/app/qimgv.ico)" \
     "$(cygpath -w $NSIS_SCRIPT)"
