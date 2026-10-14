@@ -64,7 +64,7 @@ ImageInfoOverlay::ImageInfoOverlay(FloatingWidgetContainer *parent) :
 
     // XMP section: collapsible, collapsed by default
     xmpToggle = new QToolButton(this);
-    xmpToggle->setText(QStringLiteral("XMP 信息"));
+    xmpToggle->setText(tr("XMP info"));
     xmpToggle->setCheckable(true);
     xmpToggle->setChecked(false);
     xmpToggle->setArrowType(Qt::RightArrow);

@@ -2,6 +2,7 @@
 #include <QStringList>
 #include <QHash>
 #include <QRegularExpression>
+#include <QLocale>
 
 DocumentInfo::DocumentInfo(QString path)
     : mDocumentType(DocumentType::NONE),
@@ -187,9 +188,23 @@ bool DocumentInfo::detectAnimatedAvif() {
     return result;
 }
 
+// The tag-name table below is Chinese only. In any other UI language the panel
+// must keep the original (English) exiv2 tag name, otherwise the panel mixes
+// languages while the rest of the UI is translated. This mirrors the locale
+// resolution Core::loadTranslation() uses.
+static bool uiIsChinese() {
+    QString localeName = settings->language();
+    if(localeName.isEmpty() || localeName == "system")
+        localeName = QLocale::system().name();
+    return localeName.startsWith("zh", Qt::CaseInsensitive);
+}
+
 // Localize the most common EXIF tag names ("group.tag" -> Chinese).
-// Unknown tags keep their original (English) name.
+// Unknown tags, and all tags when the UI is not Chinese, keep the original
+// (English) exiv2 name.
 static QString localizedTagName(const QString &raw) {
+    if(!uiIsChinese())
+        return raw;
     static const QHash<QString, QString> names = {
         // --- Exif.Image ---
         {"Image.ImageWidth", QStringLiteral("图像宽度")},
@@ -348,6 +363,39 @@ static QString localizedTagName(const QString &raw) {
     return names.value(raw, raw);
 }
 
+// exiv2 hands metadata back as raw bytes. EXIF "ASCII"/"Undefined" fields are
+// NOT guaranteed to be UTF-8 - they may hold the local code page (GBK on a
+// Chinese system), or plain binary. Decoding those as UTF-8 unconditionally
+// produces mojibake, so decode as UTF-8 only when the bytes are actually valid
+// UTF-8 and fall back to the local 8-bit code page otherwise.
+static QString decodeMetadataBytes(const std::string &raw) {
+    if(raw.empty())
+        return QString();
+    QByteArray bytes(raw.data(), static_cast<int>(raw.size()));
+    // strip a UTF-8 BOM if present (explicit length: "\xEF\xBB\xBF" is a
+    // 3-char array literal, and the hex escape could otherwise swallow a
+    // following hex digit)
+    static const char bom[3] = {'\xEF', '\xBB', '\xBF'};
+    if(bytes.startsWith(QByteArray::fromRawData(bom, 3)))
+        bytes.remove(0, 3);
+    QString s = QString::fromUtf8(bytes);
+    // fromUtf8() substitutes U+FFFD for invalid sequences; if that happened the
+    // input was not UTF-8, so reinterpret it using the system code page.
+    if(s.contains(QChar(0xFFFD)))
+        s = QString::fromLocal8Bit(bytes);
+    // drop control characters (except tab/newline) that binary blobs would leave
+    QString out;
+    out.reserve(s.size());
+    for(const QChar &c : s) {
+        if(c.unicode() == 0xFFFD)
+            continue;
+        if(c.unicode() < 0x20 && c != '\t' && c != '\n' && c != '\r')
+            continue;
+        out.append(c);
+    }
+    return out;
+}
+
 // Friendly formatting for a few raw exiv2 values:
 // - DateTime fields use "YYYY:MM:DD HH:MM:SS" (colons are the EXIF standard);
 //   show them as "YYYY-MM-DD HH:MM:SS" instead.
@@ -379,8 +427,11 @@ static QString formatExifValue(const QString &name, const QString &value) {
     return value;
 }
 
-// Localize DJI drone flight-data XMP tags (tag name only).
+// Localize DJI drone flight-data XMP tags (tag name only). Like the EXIF table
+// this is Chinese only, so other UI languages keep the original tag name.
 static QString localizedXmpTagName(const QString &tag) {
+    if(!uiIsChinese())
+        return tag;
     static const QHash<QString, QString> names = {
         {"AbsoluteAltitude", QStringLiteral("绝对海拔")},
         {"RelativeAltitude", QStringLiteral("相对海拔")},
@@ -439,13 +490,22 @@ void DocumentInfo::loadExifTags() {
         //    a wall of numbers, so they are dropped;
         // 2) over-long values are truncated defensively.
         for(const auto &datum : exifData) {
-            QString name = QString::fromStdString(std::string(datum.groupName()))
-                           + "." + QString::fromStdString(std::string(datum.tagName()));
+            QString name = decodeMetadataBytes(std::string(datum.groupName()))
+                           + "." + decodeMetadataBytes(std::string(datum.tagName()));
             if(name == "Image.XMLPacket" || name == "Photo.MakerNote")
                 continue;
-            QString value = QString::fromStdString(datum.value().toString());
+            const std::string rawValue = datum.value().toString();
+            QString value = decodeMetadataBytes(rawValue);
             if(value.isEmpty())
                 continue;
+            // Undefined/binary payloads decode to an unreadable wall of
+            // characters (e.g. WeChat's encrypted UserComment). Show a short
+            // placeholder instead of dumping kilobytes of noise.
+            if(datum.typeId() == Exiv2::undefined && rawValue.size() > 128) {
+                exifTags.insert(localizedTagName(name),
+                                QStringLiteral("(二进制数据 %1 字节)").arg(rawValue.size()));
+                continue;
+            }
             if(value.size() > 400)
                 value = value.left(400) + "…";
             exifTags.insert(localizedTagName(name), formatExifValue(name, value));
@@ -455,10 +515,10 @@ void DocumentInfo::loadExifTags() {
         // (requires exiv2 to be built with XMP support).
         Exiv2::XmpData &xmpData = image->xmpData();
         for(const auto &datum : xmpData) {
-            QString key = QString::fromStdString(datum.key());
+            QString key = decodeMetadataBytes(datum.key());
             if(!key.startsWith("Xmp.drone-dji."))
                 continue;
-            QString value = QString::fromStdString(datum.value().toString());
+            QString value = decodeMetadataBytes(datum.value().toString());
             if(value.isEmpty())
                 continue;
             // datum.tagName() is unreliable for XMP keys, take the last segment

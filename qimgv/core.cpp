@@ -59,6 +59,29 @@ void Core::showGui() {
 void Core::initGui() {
     mw = new MW();
     mw->hide();
+    // The EXIF/XMP panel reads metadata through these providers, only while it
+    // is visible. A malformed file must not break the open flow, hence try/catch.
+    mw->setExifMetadataProvider(
+        [this]() -> QMap<QString, QString> {
+            if(!state.currentImg)
+                return {};
+            try {
+                return state.currentImg->getExifTags();
+            } catch(...) {
+                qDebug() << "Failed to read EXIF for" << state.currentFilePath;
+                return {};
+            }
+        },
+        [this]() -> QMap<QString, QString> {
+            if(!state.currentImg)
+                return {};
+            try {
+                return state.currentImg->getXmpTags();
+            } catch(...) {
+                qDebug() << "Failed to read XMP for" << state.currentFilePath;
+                return {};
+            }
+        });
 }
 
 void Core::attachModel(DirectoryModel *_model) {
@@ -1511,13 +1534,11 @@ void Core::guiSetImage(std::shared_ptr<Image> img) {
         mw->showVideo(video->filePath());
     }
     img->isEdited() ? mw->showSaveOverlay() : mw->hideSaveOverlay();
-    // Reading EXIF/XMP must never break the rest of the open flow: a malformed
-    // file must not leave the info bar stuck on "no file opened".
-    try {
-        mw->setExifInfo(img->getExifTags(), img->getXmpTags());
-    } catch(...) {
-        qDebug() << "Failed to read EXIF/XMP for" << state.currentFilePath;
-    }
+    // NOTE: EXIF/XMP is deliberately NOT read here. Parsing every image's
+    // metadata on load made opening a file noticeably slower even though the
+    // info panel is usually closed. The panel pulls the metadata itself
+    // (see initGui) when it is shown; if it is open right now it re-pulls.
+    mw->refreshExifInfoIfVisible();
 }
 
 void Core::updateInfoString() {

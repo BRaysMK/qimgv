@@ -577,6 +577,11 @@
         <source>&lt;no metadata found&gt;</source>
         <translation>无元数据信息</translation>
     </message>
+    <message>
+        <location filename="../../gui/overlays/imageinfooverlay.cpp" line="67"/>
+        <source>XMP info</source>
+        <translation>XMP 信息</translation>
+    </message>
 </context>
 <context>
     <name>KeySequenceEdit</name>

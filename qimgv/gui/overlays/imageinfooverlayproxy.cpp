@@ -12,8 +12,26 @@ ImageInfoOverlayProxy::~ImageInfoOverlayProxy() {
 }
 
 void ImageInfoOverlayProxy::show() {
+    // pull the metadata only now that the panel is actually being opened
+    refreshMetadata();
     init();
     overlay->show();
+}
+
+void ImageInfoOverlayProxy::setMetadataProvider(std::function<QMap<QString, QString>()> _exifProvider,
+                                                std::function<QMap<QString, QString>()> _xmpProvider) {
+    exifProvider = _exifProvider;
+    xmpProvider = _xmpProvider;
+}
+
+void ImageInfoOverlayProxy::refreshMetadata() {
+    if(!exifProvider)
+        return;
+    stateBuf.info = exifProvider();
+    stateBuf.xmpInfo = xmpProvider ? xmpProvider() : QMap<QString, QString>();
+    // if the panel is already built, update it in place as well
+    if(overlay)
+        overlay->setExifInfo(stateBuf.info, stateBuf.xmpInfo);
 }
 
 void ImageInfoOverlayProxy::hide() {

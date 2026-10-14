@@ -9,6 +9,7 @@
 #include <QMimeData>
 #include <QImageWriter>
 #include <QWindow>
+#include <functional>
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
 #include <QDesktopWidget>
@@ -74,6 +75,12 @@ public:
 
     void setCurrentInfo(int fileIndex, int fileCount, QString filePath, QString fileName, QSize imageSize, qint64 fileSize, bool slideshow, bool shuffle, bool edited);
     void setExifInfo(QMap<QString, QString>, QMap<QString, QString>);
+    // The info panel pulls EXIF/XMP lazily (only while it is visible) instead of
+    // receiving it on every image load; these providers do that reading.
+    void setExifMetadataProvider(std::function<QMap<QString, QString>()> exifProvider,
+                                 std::function<QMap<QString, QString>()> xmpProvider);
+    // re-pull metadata (only does work while the panel is actually visible)
+    void refreshExifInfoIfVisible();
     std::shared_ptr<FolderViewProxy> getFolderView();
     std::shared_ptr<ThumbnailStripProxy> getThumbnailPanel();
 

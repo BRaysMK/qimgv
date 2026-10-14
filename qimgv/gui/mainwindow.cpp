@@ -856,6 +856,17 @@ void MW::setExifInfo(QMap<QString, QString> info, QMap<QString, QString> xmpInfo
         imageInfoOverlay->setExifInfo(info, xmpInfo);
 }
 
+void MW::setExifMetadataProvider(std::function<QMap<QString, QString>()> exifProvider,
+                                 std::function<QMap<QString, QString>()> xmpProvider) {
+    if(imageInfoOverlay)
+        imageInfoOverlay->setMetadataProvider(exifProvider, xmpProvider);
+}
+
+void MW::refreshExifInfoIfVisible() {
+    if(imageInfoOverlay && !imageInfoOverlay->isHidden())
+        imageInfoOverlay->refreshMetadata();
+}
+
 std::shared_ptr<FolderViewProxy> MW::getFolderView() {
     return folderView;
 }
