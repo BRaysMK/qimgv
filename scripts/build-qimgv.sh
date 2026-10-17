@@ -216,14 +216,46 @@ mkdir $PACKAGE_DIR/plugins
 cp $BUILD_DIR/plugins/player_mpv/player_mpv.dll $PACKAGE_DIR/plugins
 cp -r $BUILD_DIR/qimgv/translations/ $PACKAGE_DIR/
 
-# 1b - copy Qt's own translations (qtbase_*.qm). Without these the standard
-# buttons/strings inside QInputDialog, QMessageBox, QTableWidget etc. stay
-# English even though qimgv itself is translated.
-if [ -d "$CUSTOM_QT_DIR/translations" ]; then
-    cp -f $CUSTOM_QT_DIR/translations/qtbase_*.qm $PACKAGE_DIR/translations/ 2>/dev/null || \
-        echo "WARNING: no qtbase_*.qm found in $CUSTOM_QT_DIR/translations"
+# 1b - Qt's own strings (OK/Cancel in QInputDialog/QMessageBox, etc.) live in a
+# separate catalog. The slim Qt build ships no translations at all, so fetch the
+# official .ts files and compile them with lrelease. Without this the dialogs
+# stay half-translated even though qimgv itself is localized.
+QT_TR_DIR="$PACKAGE_DIR/translations"
+QTT_SRC="$EXT_DIR/qttranslations"
+echo "GETTING Qt translations (qtbase_*.ts)"
+mkdir -p "$QTT_SRC"
+cd "$QTT_SRC"
+wget -q --tries=3 \
+    -O qtbase_zh_CN.ts https://raw.githubusercontent.com/qt/qttranslations/5.15/translations/qtbase_zh_CN.ts || true
+wget -q --tries=3 \
+    -O qtbase_ja_JP.ts https://raw.githubusercontent.com/qt/qttranslations/5.15/translations/qtbase_ja.ts || true
+wget -q --tries=3 \
+    -O qtbase_de_DE.ts https://raw.githubusercontent.com/qt/qttranslations/5.15/translations/qtbase_de.ts || true
+wget -q --tries=3 \
+    -O qtbase_fr_FR.ts https://raw.githubusercontent.com/qt/qttranslations/5.15/translations/qtbase_fr.ts || true
+wget -q --tries=3 \
+    -O qtbase_es_ES.ts https://raw.githubusercontent.com/qt/qttranslations/5.15/translations/qtbase_es.ts || true
+wget -q --tries=3 \
+    -O qtbase_tr_TR.ts https://raw.githubusercontent.com/qt/qttranslations/5.15/translations/qtbase_tr.ts || true
+wget -q --tries=3 \
+    -O qtbase_uk_UA.ts https://raw.githubusercontent.com/qt/qttranslations/5.15/translations/qtbase_uk.ts || true
+# lrelease lives next to the other Qt tools; fall back to any found on PATH
+LRELEASE="$CUSTOM_QT_DIR/bin/lrelease.exe"
+[ -x "$LRELEASE" ] || LRELEASE=$(command -v lrelease.exe || command -v lrelease || true)
+if [ -z "$LRELEASE" ]; then
+    echo "WARNING: lrelease not found - Qt strings will stay English"
 else
-    echo "WARNING: $CUSTOM_QT_DIR/translations missing - Qt strings will be English"
+    for f in qtbase_*.ts; do
+        [ -s "$f" ] || { rm -f "$f"; continue; }
+        "$LRELEASE" "$f" -qm "$QT_TR_DIR/${f%.ts}.qm" >/dev/null 2>&1 || \
+            echo "WARNING: lrelease failed for $f"
+    done
+fi
+QTN=$(ls "$QT_TR_DIR"/qtbase_*.qm 2>/dev/null | wc -l)
+if [ "$QTN" -eq 0 ]; then
+    echo "WARNING: no qtbase_*.qm produced - Qt strings will stay English"
+else
+    echo "Qt translations packaged: $QTN"
 fi
 
 # 2 - copy qt dlls
