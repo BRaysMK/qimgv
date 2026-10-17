@@ -368,6 +368,19 @@
                </property>
               </widget>
              </item>
+             <item>
+              <widget class="ActionButton" name="editMetadata" native="true">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="accessibleName">
+                <string notr="true">ContextMenuButton</string>
+               </property>
+              </widget>
+             </item>
             </layout>
            </item>
            <item>

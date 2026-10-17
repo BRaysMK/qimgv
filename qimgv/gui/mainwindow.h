@@ -30,6 +30,7 @@
 #include "gui/overlays/imageinfooverlayproxy.h"
 #include "gui/overlays/renameoverlay.h"
 #include "gui/dialogs/resizedialog.h"
+#include "sourcecontainers/exifedittypes.h"
 #include "gui/centralwidget.h"
 #include "gui/dialogs/filereplacedialog.h"
 #include "components/actionmanager/actionmanager.h"
@@ -75,6 +76,8 @@ public:
 
     void setCurrentInfo(int fileIndex, int fileCount, QString filePath, QString fileName, QSize imageSize, qint64 fileSize, bool slideshow, bool shuffle, bool edited);
     void setExifInfo(QMap<QString, QString>, QMap<QString, QString>);
+    // Opens the metadata editor modally; returns the staged changes (empty if cancelled)
+    QList<ExifChange> showExifEditDialog(const QString &path);
     // The info panel pulls EXIF/XMP lazily (only while it is visible) instead of
     // receiving it on every image load; these providers do that reading.
     void setExifMetadataProvider(std::function<QMap<QString, QString>()> exifProvider,

@@ -87,6 +87,8 @@ void ActionManager::initDefaults() {
     actionManager->defaults.insert(InputMap::keyNameShift() + "+Left", "prevDirectory");
     actionManager->defaults.insert(InputMap::keyNameShift() + "+F", "toggleFullscreenInfoBar");
     actionManager->defaults.insert(InputMap::keyNameCtrl() + "+V", "pasteFile");
+    actionManager->defaults.insert(InputMap::keyNameCtrl() + "+E", "editMetadata");
+    actionManager->defaults.insert(InputMap::keyNameCtrl() + "+" + InputMap::keyNameShift() + "+Z", "undoMetadataEdit");
 
 #ifdef __APPLE__
     actionManager->defaults.insert(InputMap::keyNameAlt() + "+Up", "zoomIn");

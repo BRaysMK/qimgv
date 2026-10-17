@@ -127,6 +127,8 @@ private slots:
     void onFileAdded(QString filePath);
     void onFileModified(QString filePath);
     void showResizeDialog();
+    void showMetadataEditor();
+    void undoMetadataEdit();
     void resize(QSize size);
     void flipH();
     void flipV();

@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include <QObject>
 #include <QKeyEvent>
@@ -124,6 +124,8 @@ signals:
     void print();
     void toggleFullscreenInfoBar();
     void pasteFile();
+    void editMetadata();
+    void undoMetadataEdit();
 };
 
 extern ActionManager *actionManager;

@@ -7,6 +7,11 @@
 
 #include "core.h"
 
+#include <QFileInfo>
+
+#include "sourcecontainers/exifedithistory.h"
+#include "sourcecontainers/exifwriter.h"
+
 #ifdef __WIN32
 #include <tchar.h>
 #endif
@@ -212,6 +217,8 @@ void Core::initActions() {
     connect(actionManager, &ActionManager::sortByTime, this, &Core::sortByTime);
     connect(actionManager, &ActionManager::sortBySize, this, &Core::sortBySize);
     connect(actionManager, &ActionManager::toggleImageInfo, mw, &MW::toggleImageInfoOverlay);
+    connect(actionManager, &ActionManager::editMetadata, this, &Core::showMetadataEditor);
+    connect(actionManager, &ActionManager::undoMetadataEdit, this, &Core::undoMetadataEdit);
     connect(actionManager, &ActionManager::toggleShuffle, this, &Core::toggleShuffle);
     connect(actionManager, &ActionManager::toggleScalingFilter, mw, &MW::toggleScalingFilter);
     connect(actionManager, &ActionManager::showInDirectory, this, &Core::showInDirectory);
@@ -366,6 +373,8 @@ void Core::rotateRight() {
 }
 
 void Core::close() {
+    // drop metadata restore points so no multi-megabyte copies linger
+    ExifEditHistory::clearAll();
     mw->close();
 }
 
@@ -993,6 +1002,76 @@ void Core::showResizeDialog() {
     auto img = model->getImage(selectedPath());
     if(img)
         mw->showResizeDialog(img->size());
+}
+
+void Core::showMetadataEditor() {
+    if(model->isEmpty())
+        return;
+    const QString path = selectedPath();
+    auto img = model->getImage(path);
+    if(!img || img->type() != STATIC)
+        return;
+    // pixel edits and metadata edits would fight over the same file
+    if(img->isEdited()) {
+        mw->showMessage(tr("Save or discard your changes first."), 4000);
+        return;
+    }
+    if(!ExifWriter::supportsWriting(path)) {
+        mw->showMessage(tr("This file type does not support metadata editing."), 4000);
+        return;
+    }
+    QFileInfo fi(path);
+    if(!fi.isWritable()) {
+        mw->showMessage(tr("This file is read-only."), 4000);
+        return;
+    }
+
+    // Restore point: created here, i.e. only when the user actually enters the
+    // editor - never while browsing.
+    QString snapError;
+    if(!ExifEditHistory::createSnapshot(path, &snapError)) {
+        mw->showError(tr("Could not create a restore point: ") + snapError);
+        return;
+    }
+
+    const QList<ExifChange> changes = mw->showExifEditDialog(path);
+    if(changes.isEmpty()) {
+        // nothing was changed: drop the restore point so no stray copies remain
+        ExifEditHistory::discardSnapshot(path);
+        return;
+    }
+
+    const ExifEditResult result = ExifWriter::apply(path, changes);
+    if(!result.ok) {
+        mw->showError(tr("Could not write metadata: ") + result.error);
+        // keep the snapshot: the file may be in an unknown state
+        return;
+    }
+
+    model->reload(path);
+    updateInfoString();
+    // refresh the info panel if it is open
+    mw->refreshExifInfoIfVisible();
+    mw->showMessageSuccess(tr("Metadata saved"));
+}
+
+void Core::undoMetadataEdit() {
+    if(model->isEmpty())
+        return;
+    const QString path = selectedPath();
+    if(!ExifEditHistory::hasSnapshot(path)) {
+        mw->showMessage(tr("Nothing to undo."), 3000);
+        return;
+    }
+    QString error;
+    if(!ExifEditHistory::restoreSnapshot(path, &error)) {
+        mw->showError(tr("Could not restore metadata: ") + error);
+        return;
+    }
+    model->reload(path);
+    updateInfoString();
+    mw->refreshExifInfoIfVisible();
+    mw->showMessageSuccess(tr("Metadata changes reverted"));
 }
 
 // ---------------------------------------------------------------- image operations

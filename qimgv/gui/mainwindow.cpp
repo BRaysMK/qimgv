@@ -1,5 +1,7 @@
 #include "mainwindow.h"
 
+#include "gui/dialogs/exifeditdialog.h"
+
 // TODO: nuke this and rewrite
 
 MW::MW(QWidget *parent)
@@ -599,6 +601,14 @@ void MW::showResizeDialog(QSize initialSize) {
     ResizeDialog dialog(initialSize, this);
     connect(&dialog, &ResizeDialog::sizeSelected, this, &MW::resizeRequested);
     dialog.exec();
+}
+
+QList<ExifChange> MW::showExifEditDialog(const QString &path) {
+    docWidget->hideFloatingPanel();
+    ExifEditDialog dialog(path, this);
+    if(dialog.exec() == QDialog::Accepted && dialog.hasChanges())
+        return dialog.changes();
+    return {};
 }
 
 DialogResult MW::fileReplaceDialog(QString src, QString dst, FileReplaceMode mode, bool multiple) {

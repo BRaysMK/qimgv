@@ -56,6 +56,8 @@ static inline QString localizedActionName(const QString &action) {
         {"toggleFitMode", QStringLiteral("切换适应模式")},
         {"toggleFullscreen", QStringLiteral("切换全屏")},
         {"toggleFullscreenInfoBar", QStringLiteral("切换全屏信息栏")},
+        {"editMetadata", QStringLiteral("编辑元数据")},
+        {"undoMetadataEdit", QStringLiteral("撤回元数据修改")},
         {"toggleImageInfo", QStringLiteral("显示图像信息")},
         {"toggleShuffle", QStringLiteral("切换随机播放")},
         {"toggleSlideshow", QStringLiteral("切换幻灯片播放")},

@@ -52,6 +52,9 @@ ContextMenu::ContextMenu(QWidget *parent) :
     ui->resize->setAction("resize");
     ui->resize->setIconPath(":/res/icons/common/menuitem/resize16.png");
     ui->resize->setTriggerMode(TriggerMode::PressTrigger);
+    ui->editMetadata->setAction("editMetadata");
+    ui->editMetadata->setIconPath(":/res/icons/common/menuitem/settings16.png");
+    ui->editMetadata->setTriggerMode(TriggerMode::PressTrigger);
     // -------------------------------------------------------------------------
     //  entries
     ui->print->setAction("print");
@@ -142,6 +145,7 @@ void ContextMenu::setImageEntriesEnabled(bool mode) {
     ui->flipV->setEnabled(mode);
     ui->crop->setEnabled(mode);
     ui->resize->setEnabled(mode);
+    ui->editMetadata->setEnabled(mode);
 
     ui->copy->setEnabled(mode);
     ui->move->setEnabled(mode);

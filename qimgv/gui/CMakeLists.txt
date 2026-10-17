@@ -30,6 +30,7 @@ target_sources(qimgv PRIVATE
     customwidgets/entryinfoitem.cpp
     customwidgets/ssidebar.cpp
 
+    dialogs/exifeditdialog.cpp
     dialogs/filereplacedialog.cpp
     dialogs/resizedialog.cpp
     dialogs/scripteditordialog.cpp
