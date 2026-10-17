@@ -1,7 +1,7 @@
 ; qimgv Windows installer (NSIS / MUI2)
 ;
 ; Usage:
-;   makensis /DVER=1.0.4 /DVERNUM=1.0.4.0 /DBUILD_DIR=./qimgv-x64_v1.0.4 qimgv-installer.nsi
+;   makensis /DVER=1.0.5 /DVERNUM=1.0.5.0 /DBUILD_DIR=./qimgv-x64_v1.0.5 qimgv-installer.nsi
 ;
 ;   VER       - version string used for the output file name (qimgv-x64_<VER>.exe)
 ;   VERNUM    - numeric X.X.X.X version for the installer's version resource
@@ -23,7 +23,7 @@
 !endif
 ; numeric version for VIProductVersion; must be exactly X.X.X.X
 !ifndef VERNUM
-  !define VERNUM "1.0.4.0"
+  !define VERNUM "1.0.5.0"
 !endif
 
 Name "qimgv"
