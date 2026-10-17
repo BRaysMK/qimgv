@@ -319,6 +319,42 @@
         <source>Error: could not load image.</source>
         <translation>Erreur : impossible de charger l&apos;image.</translation>
     </message>
+    <message>
+        <source>Save or discard your changes first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file type does not support metadata editing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file is read-only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not create a restore point: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not write metadata: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Metadata saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to undo.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not restore metadata: </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Metadata changes reverted</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>CropPanel</name>
@@ -2029,6 +2065,81 @@ li.checked::marker { content: &quot;\2612&quot;; }
         <location filename="../../main.cpp" line="142"/>
         <source>Show build options.</source>
         <translation>Afficher les options de build.</translation>
+    </message>
+</context>
+<context>
+    <name>ExifEditDialog</name>
+    <message>
+        <source>Edit metadata</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo delete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add tag...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Double-click a value to edit it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Namespace (one of: %1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unknown namespace.\nSupported: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tag queued for writing:\n%1 = %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (deleted)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not read metadata</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 </TS>

@@ -249,6 +249,8 @@ void Core::loadTranslation() {
         localeName = QLocale::system().name();
     if(localeName.isEmpty() || localeName == "en_US") {
         QApplication::removeTranslator(translator);
+        if(qtTranslator)
+            QApplication::removeTranslator(qtTranslator);
         return;
     }
     QString trFile = trPath + "/" + localeName;
@@ -261,6 +263,17 @@ void Core::loadTranslation() {
         }
     }
     QApplication::installTranslator(translator);
+
+    // Qt's own strings (OK/Cancel in QInputDialog/QMessageBox, etc.) live in a
+    // separate catalog. Without it the app is half-translated.
+    if(!qtTranslator)
+        qtTranslator = new QTranslator;
+    const QString qtName = QStringLiteral("qtbase_") + localeName;
+    if(!qtTranslator->load(qtName, trPath) && !qtTranslator->load(qtName, trPathFallback)) {
+        qDebug() << "Could not load Qt translation file:" << qtName;
+        return;
+    }
+    QApplication::installTranslator(qtTranslator);
 }
 
 void Core::onUpdate() {

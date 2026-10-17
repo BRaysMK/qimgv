@@ -319,6 +319,42 @@
         <source>Error: could not load image.</source>
         <translation>错误: 不能载入图片.</translation>
     </message>
+    <message>
+        <source>Save or discard your changes first.</source>
+        <translation>请先保存或放弃当前修改。</translation>
+    </message>
+    <message>
+        <source>This file type does not support metadata editing.</source>
+        <translation>该文件类型不支持编辑元数据。</translation>
+    </message>
+    <message>
+        <source>This file is read-only.</source>
+        <translation>该文件为只读。</translation>
+    </message>
+    <message>
+        <source>Could not create a restore point: </source>
+        <translation>无法创建还原点：</translation>
+    </message>
+    <message>
+        <source>Could not write metadata: </source>
+        <translation>无法写入元数据：</translation>
+    </message>
+    <message>
+        <source>Metadata saved</source>
+        <translation>元数据已保存</translation>
+    </message>
+    <message>
+        <source>Nothing to undo.</source>
+        <translation>没有可撤回的操作。</translation>
+    </message>
+    <message>
+        <source>Could not restore metadata: </source>
+        <translation>无法恢复元数据：</translation>
+    </message>
+    <message>
+        <source>Metadata changes reverted</source>
+        <translation>元数据修改已撤回</translation>
+    </message>
 </context>
 <context>
     <name>CropPanel</name>
@@ -2016,6 +2052,81 @@ hr { height: 1px; border-width: 0; }
         <location filename="../../main.cpp" line="142"/>
         <source>Show build options.</source>
         <translation>显示编译选项.</translation>
+    </message>
+</context>
+<context>
+    <name>ExifEditDialog</name>
+    <message>
+        <source>Edit metadata</source>
+        <translation>编辑元数据</translation>
+    </message>
+    <message>
+        <source>Delete tag</source>
+        <translation>删除标签</translation>
+    </message>
+    <message>
+        <source>Undo delete</source>
+        <translation>撤销删除</translation>
+    </message>
+    <message>
+        <source>Add tag...</source>
+        <translation>添加标签…</translation>
+    </message>
+    <message>
+        <source>Double-click a value to edit it</source>
+        <translation>双击数值即可编辑</translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation>名称</translation>
+    </message>
+    <message>
+        <source>Key</source>
+        <translation>键名</translation>
+    </message>
+    <message>
+        <source>Type</source>
+        <translation>类型</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation>数值</translation>
+    </message>
+    <message>
+        <source>Save</source>
+        <translation>保存</translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation>取消</translation>
+    </message>
+    <message>
+        <source>Add tag</source>
+        <translation>添加标签</translation>
+    </message>
+    <message>
+        <source>Tag name</source>
+        <translation>标签名</translation>
+    </message>
+    <message>
+        <source>Namespace (one of: %1)</source>
+        <translation>命名空间（以下之一：%1）</translation>
+    </message>
+    <message>
+        <source>Unknown namespace.\nSupported: %1</source>
+        <translation>未知命名空间。\n支持：%1</translation>
+    </message>
+    <message>
+        <source>Tag queued for writing:\n%1 = %2</source>
+        <translation>已加入待写入队列：\n%1 = %2</translation>
+    </message>
+    <message>
+        <source>%1 (deleted)</source>
+        <translation>%1（已删除）</translation>
+    </message>
+    <message>
+        <source>Could not read metadata</source>
+        <translation>无法读取元数据</translation>
     </message>
 </context>
 </TS>

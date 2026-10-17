@@ -216,6 +216,16 @@ mkdir $PACKAGE_DIR/plugins
 cp $BUILD_DIR/plugins/player_mpv/player_mpv.dll $PACKAGE_DIR/plugins
 cp -r $BUILD_DIR/qimgv/translations/ $PACKAGE_DIR/
 
+# 1b - copy Qt's own translations (qtbase_*.qm). Without these the standard
+# buttons/strings inside QInputDialog, QMessageBox, QTableWidget etc. stay
+# English even though qimgv itself is translated.
+if [ -d "$CUSTOM_QT_DIR/translations" ]; then
+    cp -f $CUSTOM_QT_DIR/translations/qtbase_*.qm $PACKAGE_DIR/translations/ 2>/dev/null || \
+        echo "WARNING: no qtbase_*.qm found in $CUSTOM_QT_DIR/translations"
+else
+    echo "WARNING: $CUSTOM_QT_DIR/translations missing - Qt strings will be English"
+fi
+
 # 2 - copy qt dlls
 cd $CUSTOM_QT_DIR/bin
 cp Qt5Core.dll Qt5Gui.dll Qt5PrintSupport.dll Qt5Svg.dll Qt5Widgets.dll $PACKAGE_DIR

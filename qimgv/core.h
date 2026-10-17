@@ -74,6 +74,9 @@ private:
     QDrag *mDrag;
     QMimeData *getMimeDataForImage(std::shared_ptr<Image> img, MimeDataTarget target);
     QTranslator *translator = nullptr;
+    // Qt's own catalog (qtbase_*.qm), installed alongside the app's one so the
+    // standard dialog buttons are translated too.
+    QTranslator *qtTranslator = nullptr;
 
     Randomizer randomizer;
     void syncRandomizer();

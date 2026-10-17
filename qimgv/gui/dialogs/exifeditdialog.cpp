@@ -41,6 +41,16 @@ ExifEditDialog::ExifEditDialog(const QString &filePath, QWidget *parent) :
     connect(ui->undoDeleteButton, &QPushButton::clicked, this, &ExifEditDialog::undoDeleteSelected);
     connect(ui->addButton, &QPushButton::clicked, this, &ExifEditDialog::addTag);
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &ExifEditDialog::onSaveClicked);
+    // Without this the Cancel button emits rejected into the void and the
+    // dialog never closes.
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &QDialog::reject);
+
+    // The delete/undo buttons depend on which row is selected, so they have to
+    // react to the selection changing - not only to value edits.
+    connect(ui->table, &QTableWidget::itemSelectionChanged,
+            this, &ExifEditDialog::refreshButtons);
+    connect(ui->table, &QTableWidget::currentCellChanged,
+            this, [this](int, int, int, int) { refreshButtons(); });
 
     // committing an in-place edit stages a change
     connect(ui->table, &QTableWidget::itemChanged, this, [this](QTableWidgetItem *item) {
@@ -212,8 +222,15 @@ void ExifEditDialog::addTag() {
 void ExifEditDialog::refreshButtons() {
     const bool hasChanges = !mChanges.isEmpty();
     ui->buttonBox->button(QDialogButtonBox::Save)->setEnabled(hasChanges);
-    ui->deleteButton->setEnabled(ui->table->currentRow() >= 0);
-    ui->undoDeleteButton->setEnabled(ui->table->currentRow() >= 0);
+
+    const int row = ui->table->currentRow();
+    const bool validRow = row >= 0 && row < mEntries.count();
+    const bool selectedIsDeleted = validRow && mDeletedKeys.contains(mEntries.at(row).key);
+
+    // "Delete" only makes sense on a row that is not already staged for
+    // deletion, and "Undo delete" only on one that is.
+    ui->deleteButton->setEnabled(validRow && !selectedIsDeleted);
+    ui->undoDeleteButton->setEnabled(validRow && selectedIsDeleted);
 }
 
 void ExifEditDialog::onSaveClicked() {
