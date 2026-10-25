@@ -29,3 +29,5 @@ docs/dev/
 *.7z
 *.exe
 _dl.sh
+
+scripts/__pycache__/
