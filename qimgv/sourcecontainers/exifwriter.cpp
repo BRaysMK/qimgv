@@ -76,16 +76,19 @@ QList<ExifEntryInfo> ExifWriter::readAll(const QString &path, QString *error) {
         auto appendFrom = [&out](const auto &md) {
             for(const auto &datum : md) {
                 ExifEntryInfo info;
-                info.key = QString::fromStdString(datum.key());
-                info.group = QString::fromStdString(std::string(datum.groupName()));
-                info.tagName = QString::fromStdString(std::string(datum.tagName()));
-                info.typeName = QString::fromStdString(std::string(datum.typeName()));
+                // decodeMetadataBytes: metadata bytes are not guaranteed UTF-8;
+                // without it GBK/ANSI values would display (and get written
+                // back) as mojibake.
+                info.key = decodeMetadataBytes(datum.key());
+                info.group = decodeMetadataBytes(std::string(datum.groupName()));
+                info.tagName = decodeMetadataBytes(std::string(datum.tagName()));
+                info.typeName = decodeMetadataBytes(std::string(datum.typeName()));
                 // binary payloads would render as a wall of noise
                 if(datum.typeId() == Exiv2::undefined)
                     info.value = QStringLiteral("(binary data %1 bytes)")
                                      .arg(static_cast<qlonglong>(datum.size()));
                 else
-                    info.value = QString::fromStdString(datum.value().toString());
+                    info.value = decodeMetadataBytes(datum.value().toString());
                 // Ascii/XmpText and numbers can be edited as text; binary can not
                 info.writable = (datum.typeId() != Exiv2::undefined);
                 out.append(info);

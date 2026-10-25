@@ -1,4 +1,5 @@
 #include "documentinfo.h"
+#include "utils/stuff.h"
 #include <QStringList>
 #include <QHash>
 #include <QRegularExpression>
@@ -363,38 +364,8 @@ static QString localizedTagName(const QString &raw) {
     return names.value(raw, raw);
 }
 
-// exiv2 hands metadata back as raw bytes. EXIF "ASCII"/"Undefined" fields are
-// NOT guaranteed to be UTF-8 - they may hold the local code page (GBK on a
-// Chinese system), or plain binary. Decoding those as UTF-8 unconditionally
-// produces mojibake, so decode as UTF-8 only when the bytes are actually valid
-// UTF-8 and fall back to the local 8-bit code page otherwise.
-static QString decodeMetadataBytes(const std::string &raw) {
-    if(raw.empty())
-        return QString();
-    QByteArray bytes(raw.data(), static_cast<int>(raw.size()));
-    // strip a UTF-8 BOM if present (explicit length: "\xEF\xBB\xBF" is a
-    // 3-char array literal, and the hex escape could otherwise swallow a
-    // following hex digit)
-    static const char bom[3] = {'\xEF', '\xBB', '\xBF'};
-    if(bytes.startsWith(QByteArray::fromRawData(bom, 3)))
-        bytes.remove(0, 3);
-    QString s = QString::fromUtf8(bytes);
-    // fromUtf8() substitutes U+FFFD for invalid sequences; if that happened the
-    // input was not UTF-8, so reinterpret it using the system code page.
-    if(s.contains(QChar(0xFFFD)))
-        s = QString::fromLocal8Bit(bytes);
-    // drop control characters (except tab/newline) that binary blobs would leave
-    QString out;
-    out.reserve(s.size());
-    for(const QChar &c : s) {
-        if(c.unicode() == 0xFFFD)
-            continue;
-        if(c.unicode() < 0x20 && c != '\t' && c != '\n' && c != '\r')
-            continue;
-        out.append(c);
-    }
-    return out;
-}
+// decodeMetadataBytes() moved to utils/stuff.{h,cpp} so the metadata editor
+// (exifwriter.cpp) shares the exact same decoding rules.
 
 // Friendly formatting for a few raw exiv2 values:
 // - DateTime fields use "YYYY:MM:DD HH:MM:SS" (colons are the EXIF standard);

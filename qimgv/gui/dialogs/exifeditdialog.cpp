@@ -62,6 +62,9 @@ ExifEditDialog::ExifEditDialog(const QString &filePath, QWidget *parent) :
         const ExifEntryInfo &entry = mEntries.at(row);
         if(!entry.writable)
             return;
+        // the row is staged for deletion; editing it must not resurrect it
+        if(mDeletedKeys.contains(entry.key))
+            return;
         const QString newValue = item->text();
         if(newValue == entry.value)
             return; // nothing actually changed
@@ -70,6 +73,11 @@ ExifEditDialog::ExifEditDialog(const QString &filePath, QWidget *parent) :
         change.kind = ExifChangeKind::SetValue;
         change.key = entry.key;
         change.value = newValue;
+        // last edit wins: drop any earlier staged value for the same key
+        for(int i = mChanges.count() - 1; i >= 0; --i) {
+            if(mChanges.at(i).kind == ExifChangeKind::SetValue && mChanges.at(i).key == entry.key)
+                mChanges.removeAt(i);
+        }
         mChanges.append(change);
         refreshButtons();
     });
@@ -148,6 +156,11 @@ void ExifEditDialog::markDeleteSelected() {
         nameItem->setFont(f);
         nameItem->setText(tr("%1 (deleted)").arg(entry.tagName));
     }
+    // a deleted row must not be editable until the deletion is undone
+    if(QTableWidgetItem *valueItem = ui->table->item(row, COL_VALUE)) {
+        valueItem->setFlags(valueItem->flags() & ~Qt::ItemIsEditable);
+        valueItem->setToolTip(tr("Marked for deletion. Use \"Undo delete\" to restore."));
+    }
     refreshButtons();
 }
 
@@ -173,6 +186,11 @@ void ExifEditDialog::undoDeleteSelected() {
         f.setStrikeOut(false);
         nameItem->setFont(f);
         nameItem->setText(entry.tagName);
+    }
+    if(QTableWidgetItem *valueItem = ui->table->item(row, COL_VALUE)) {
+        if(entry.writable)
+            valueItem->setFlags(valueItem->flags() | Qt::ItemIsEditable);
+        valueItem->setToolTip(QString());
     }
     refreshButtons();
 }
