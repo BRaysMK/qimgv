@@ -166,6 +166,12 @@ bool CopyOverlay::focusNextPrevChild(bool mode) {
 
 void CopyOverlay::keyPressEvent(QKeyEvent *event) {
     event->accept();
+    // Esc must cancel the overlay, not leak into the shortcut system where it
+    // means closeFullScreenOrExit (i.e. quitting the whole app mid-operation).
+    if(event->key() == Qt::Key_Escape) {
+        hide();
+        return;
+    }
     QString key = actionManager->keyForNativeScancode(event->nativeScanCode());
     if(shortcuts.contains(key))
         requestFileOperation(pathWidgets.at(shortcuts[key])->directory());

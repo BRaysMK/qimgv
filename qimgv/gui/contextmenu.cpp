@@ -190,14 +190,19 @@ void ContextMenu::paintEvent(QPaintEvent *event) {
 }
 
 void ContextMenu::keyPressEvent(QKeyEvent *event) {
-    quint32 nativeScanCode = event->nativeScanCode();
-    QString key = actionManager->keyForNativeScancode(nativeScanCode);
-    // todo: keyboard navigation
-    if(key == "Up") {}
-    if(key == "Down") {}
-    if(key == "Esc")
+    // Keyboard navigation is not implemented yet (todo below). Until then,
+    // consume navigation keys here instead of leaking them into the shortcut
+    // system: Esc used to close the menu AND trigger closeFullScreenOrExit
+    // (quitting the app), and arrows flipped images behind the open menu.
+    if(event->key() == Qt::Key_Escape) {
         hide();
-    if(key == "Enter") {}
-    else
-        actionManager->processEvent(event);
+        return;
+    }
+    if(event->key() == Qt::Key_Up || event->key() == Qt::Key_Down
+       || event->key() == Qt::Key_Left || event->key() == Qt::Key_Right
+       || event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) {
+        event->accept();
+        return; // todo: keyboard navigation
+    }
+    actionManager->processEvent(event);
 }

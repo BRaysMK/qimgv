@@ -66,18 +66,20 @@ ExifEditDialog::ExifEditDialog(const QString &filePath, QWidget *parent) :
         if(mDeletedKeys.contains(entry.key))
             return;
         const QString newValue = item->text();
+        // last edit wins: drop any earlier staged change for the same key.
+        // This also makes reverting a cell to its original value properly
+        // un-stage the change instead of silently writing the old edit.
+        for(int i = mChanges.count() - 1; i >= 0; --i) {
+            const ExifChange &c = mChanges.at(i);
+            if(c.key == entry.key && (c.kind == ExifChangeKind::SetValue || c.kind == ExifChangeKind::AddTag))
+                mChanges.removeAt(i);
+        }
         if(newValue == entry.value)
-            return; // nothing actually changed
-
+            return; // back to the original value: nothing to write
         ExifChange change;
         change.kind = ExifChangeKind::SetValue;
         change.key = entry.key;
         change.value = newValue;
-        // last edit wins: drop any earlier staged value for the same key
-        for(int i = mChanges.count() - 1; i >= 0; --i) {
-            if(mChanges.at(i).kind == ExifChangeKind::SetValue && mChanges.at(i).key == entry.key)
-                mChanges.removeAt(i);
-        }
         mChanges.append(change);
         refreshButtons();
     });

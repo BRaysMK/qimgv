@@ -194,6 +194,17 @@ void DirectoryModel::unloadExcept(QString filePath, bool keepNearby) {
         list << prevOf(filePath);
         list << nextOf(filePath);
     }
+    // Never evict entries with unsaved pixel edits: trimming deletes the cache
+    // item, which would silently destroy the edited image (it only exists in
+    // memory - reloading from disk brings the unedited original back).
+    const QList<QString> cachedPaths = cache.keys();
+    for(const QString &cached : cachedPaths) {
+        if(list.contains(cached))
+            continue;
+        auto img = cache.get(cached);
+        if(img && img->isEdited())
+            list << cached;
+    }
     cache.trimTo(list);
 }
 

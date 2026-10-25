@@ -310,12 +310,15 @@ void Settings::setMpvBinary(QString path) {
 }
 //------------------------------------------------------------------------------
 QList<QByteArray> Settings::supportedFormats() {
-    auto formats = QImageReader::supportedImageFormats();
-    formats << "jfif";
-    if(videoPlayback())
-        formats << mVideoFormatsMap.values();
-    formats.removeAll("pdf");
-    return formats;
+    if(!mSupportedFormatsCached) {
+        mSupportedFormatsCache = QImageReader::supportedImageFormats();
+        mSupportedFormatsCache << "jfif";
+        if(videoPlayback())
+            mSupportedFormatsCache << mVideoFormatsMap.values();
+        mSupportedFormatsCache.removeAll("pdf");
+        mSupportedFormatsCached = true;
+    }
+    return mSupportedFormatsCache;
 }
 //------------------------------------------------------------------------------
 // (for open/save dialogs, as a single string)
@@ -363,6 +366,8 @@ bool Settings::videoPlayback() {
 
 void Settings::setVideoPlayback(bool mode) {
     settings->settingsConf->setValue("videoPlayback", mode);
+    // video formats are part of supportedFormats(); drop the cache
+    mSupportedFormatsCached = false;
 }
 //------------------------------------------------------------------------------
 bool Settings::useSystemColorScheme() {

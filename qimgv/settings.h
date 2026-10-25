@@ -316,6 +316,11 @@ private:
     QDir *mTmpDir, *mThumbCacheDir, *mConfDir;
     ColorScheme mColorScheme;
     QMultiMap<QByteArray, QByteArray> mVideoFormatsMap; // [mimetype, format]
+    // supportedFormats() result cache: the first QImageReader::supportedImageFormats()
+    // call scans every imageformat plugin's metadata; cache the combined list
+    // (invalidated when the videoPlayback setting changes)
+    QList<QByteArray> mSupportedFormatsCache;
+    bool mSupportedFormatsCached = false;
     void loadTheme();
     void saveTheme();
     void createColorVariants();

@@ -57,7 +57,10 @@ void Core::showGui() {
     // TODO: this is unreliable.
     // how to make it wait until a window is shown?
     qApp->processEvents();
-    QTimer::singleShot(50, mw, SLOT(setupFullUi()));
+    // The first paint already happened inside processEvents() above, so the
+    // heavy widgets (thumbnail strip, info bars, crop panel) can be built on
+    // the very next event loop iteration - no reason to idle for 50ms first.
+    QTimer::singleShot(0, mw, SLOT(setupFullUi()));
 }
 
 // create MainWindow and all widgets
@@ -395,6 +398,9 @@ void Core::removePermanent() {
     auto paths = currentSelection();
     if(!paths.count())
         return;
+    // deleting the file on disk destroys unsaved pixel edits held in memory
+    if(!confirmUnsavedEditsLoss(paths))
+        return;
     if(settings->confirmDelete()) {
         QString msg;
         if(paths.count() > 1)
@@ -428,6 +434,9 @@ void Core::removePermanent() {
 void Core::moveToTrash() {
     auto paths = currentSelection();
     if(!paths.count())
+        return;
+    // trashing the file on disk destroys unsaved pixel edits held in memory
+    if(!confirmUnsavedEditsLoss(paths))
         return;
     if(settings->confirmTrash()) {
         QString msg;
@@ -672,6 +681,11 @@ QMimeData *Core::getMimeDataForImage(std::shared_ptr<Image> img, MimeDataTarget 
 
 void Core::sortBy(SortingMode mode) {
     model->setSortingMode(mode);
+    // persist the choice so the settings dialog and the next launch agree
+    // (previously the folder view changed sorting at runtime but the stored
+    // value stayed stale, and settings could silently revert it)
+    if(settings->sortingMode() != mode)
+        settings->setSortingMode(mode);
 }
 
 void Core::setFoldersDisplay(bool mode) {
@@ -681,6 +695,9 @@ void Core::setFoldersDisplay(bool mode) {
 
 void Core::renameCurrentSelection(QString newName) {
     if(!model->fileCount() || newName.isEmpty() || selectedPath().isEmpty())
+        return;
+    // renaming invalidates the cache entry, discarding unsaved pixel edits
+    if(!confirmUnsavedEditsLoss({selectedPath()}))
         return;
     FileOpResult result;
     model->renameEntry(selectedPath(), newName, false, result);
@@ -952,6 +969,9 @@ void Core::movePathsTo(QList<QString> paths, QString destDirectory) {
 void Core::moveCurrentFile(QString destDirectory) {
     if(model->isEmpty())
         return;
+    // moving the file on disk destroys unsaved pixel edits held in memory
+    if(!confirmUnsavedEditsLoss({selectedPath()}))
+        return;
     // pause updates to avoid flicker
     mw->setUpdatesEnabled(false);
     // move fails during file playback, so we close it temporarily
@@ -1012,6 +1032,8 @@ void Core::requestSavePath() {
 void Core::showResizeDialog() {
     if(model->isEmpty())
         return;
+    // a modal dialog must not race the slideshow flipping images behind it
+    stopSlideshow();
     auto img = model->getImage(selectedPath());
     if(img)
         mw->showResizeDialog(img->size());
@@ -1020,10 +1042,14 @@ void Core::showResizeDialog() {
 void Core::showMetadataEditor() {
     if(model->isEmpty())
         return;
+    // a modal dialog must not race the slideshow flipping images behind it
+    stopSlideshow();
     const QString path = selectedPath();
     auto img = model->getImage(path);
-    if(!img || img->type() != STATIC)
+    if(!img || img->type() != STATIC) {
+        mw->showMessage(tr("Metadata editing is only available for static images."), 4000);
         return;
+    }
     // pixel edits and metadata edits would fight over the same file
     if(img->isEdited()) {
         mw->showMessage(tr("Save or discard your changes first."), 4000);
@@ -1068,10 +1094,29 @@ void Core::showMetadataEditor() {
     mw->showMessageSuccess(tr("Metadata saved"));
 }
 
+// Returns false if the user chose to keep their edits: any of `paths` has
+// unsaved pixel edits which the intended operation (delete/move/rename/
+// metadata undo) would silently destroy.
+bool Core::confirmUnsavedEditsLoss(const QList<QString> &paths) {
+    for(const QString &path : paths) {
+        auto img = model->getImage(path);
+        if(img && img->isEdited()) {
+            return mw->showConfirmation(
+                tr("Unsaved changes"),
+                tr("This image has unsaved changes.\nDiscard them and continue?"));
+        }
+    }
+    return true;
+}
+
 void Core::undoMetadataEdit() {
     if(model->isEmpty())
         return;
     const QString path = selectedPath();
+    // restoring the snapshot rewrites the file and reloads it from disk,
+    // which would throw away any unsaved pixel edits
+    if(!confirmUnsavedEditsLoss({path}))
+        return;
     if(!ExifEditHistory::hasSnapshot(path)) {
         mw->showMessage(tr("Nothing to undo."), 3000);
         return;
@@ -1281,6 +1326,8 @@ void Core::setWallpaper() {
 void Core::print() {
     if(model->isEmpty())
         return;
+    // a modal dialog must not race the slideshow flipping images behind it
+    stopSlideshow();
     PrintDialog p(mw);
     auto img = model->getImage(selectedPath());
     if(!img) {

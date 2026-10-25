@@ -2,6 +2,8 @@
 #include "ui_settingsdialog.h"
 #include "shortcutnames.h"
 
+#include <QMessageBox>
+
 SettingsDialog::SettingsDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SettingsDialog)
@@ -318,7 +320,12 @@ void SettingsDialog::saveSettings() {
     else
         settings->setImageFitMode(FIT_ORIGINAL);
 
-    settings->setLanguage(langs.key(ui->langComboBox->currentText()));
+    // surface a restart hint when the language actually changed - the new
+    // translation only applies after relaunch
+    const QString newLang = langs.key(ui->langComboBox->currentText());
+    if(newLang != settings->language())
+        languageChanged = true;
+    settings->setLanguage(newLang);
 
     settings->setVideoPlayback(ui->videoPlaybackCheckBox->isChecked());
     settings->setPlayVideoSounds(ui->playSoundsCheckBox->isChecked());
@@ -418,6 +425,12 @@ void SettingsDialog::saveSettings() {
 //------------------------------------------------------------------------------
 void SettingsDialog::saveSettingsAndClose() {
     saveSettings();
+    if(languageChanged) {
+        // translations are loaded at startup only; make the no-op visible
+        QMessageBox::information(this, tr("Language changed"),
+                                 tr("The new language will be applied after you restart the application."));
+        languageChanged = false;
+    }
     this->close();
 }
 //------------------------------------------------------------------------------

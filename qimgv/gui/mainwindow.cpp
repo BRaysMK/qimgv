@@ -891,13 +891,13 @@ void MW::showMessageDirectory(QString dirName) {
 }
 
 void MW::showMessageDirectoryEnd() {
-    // TODO replace with something nicer (integrate with click overlay?)
-    //floatingMessage->showMessage("", FloatingWidgetPosition::RIGHT, FloatingMessageIcon::ICON_RIGHT_EDGE, 400);
+    // brief right-edge arrow: no more images in this direction
+    floatingMessage->showMessage("", FloatingWidgetPosition::RIGHT, FloatingMessageIcon::ICON_RIGHT_EDGE, 400);
 }
 
 void MW::showMessageDirectoryStart() {
-    // TODO replace with something nicer (integrate with click overlay?)
-    //floatingMessage->showMessage("", FloatingWidgetPosition::LEFT, FloatingMessageIcon::ICON_LEFT_EDGE, 400);
+    // brief left-edge arrow: no more images in this direction
+    floatingMessage->showMessage("", FloatingWidgetPosition::LEFT, FloatingMessageIcon::ICON_LEFT_EDGE, 400);
 }
 
 void MW::showMessageFitWindow() {

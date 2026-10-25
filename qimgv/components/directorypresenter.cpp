@@ -1,4 +1,8 @@
-﻿#include "directorypresenter.h"
+#include "directorypresenter.h"
+
+#include <QPainter>
+#include <QPolygonF>
+#include <QTransform>
 
 DirectoryPresenter::DirectoryPresenter(QObject *parent) : QObject(parent), mShowDirs(false) {
     connect(&thumbnailer, &Thumbnailer::thumbnailReady, this, &DirectoryPresenter::onThumbnailReady);
@@ -187,17 +191,37 @@ void DirectoryPresenter::generateThumbnails(QList<int> indexes, int size, bool c
     }
     for(int i : indexes) {
         if(i < model->dirCount()) {
-            // tmp ------------------------------------------------------------
             // gen thumb for a directory
             // TODO: optimize & move dir icon loading to shared res; then overlay
             // the mini-thumbs on top (similar to dolphin)
-            QSvgRenderer svgRenderer;
-            svgRenderer.load(QString(":/res/icons/common/other/folder32-scalable.svg"));
-            int factor = (size * 0.90f) / svgRenderer.defaultSize().width();
-            QPixmap *pixmap = new QPixmap(svgRenderer.defaultSize() * factor);
+            // Folder silhouette drawn directly with QPainterPath (same geometry
+            // as the old folder32-scalable.svg) so the Qt5Svg dependency is not
+            // needed at all. Shape is recolored to the theme's icon color below.
+            // SVG viewBox was 8.4666665 x 6.3500004 at 32x24 logical px.
+            const qreal svgW = 32, svgH = 24;
+            const qreal vbW = 8.4666665, vbH = 6.3500004;
+            QPolygonF folderShape({
+                QPointF(0.0,      0.0),      // top-left
+                QPointF(0.0,      vbH),      // bottom-left
+                QPointF(vbW,      vbH),      // bottom-right
+                QPointF(vbW,      0.79375),  // top-right (folder body top)
+                QPointF(4.2333333, 0.79375), // tab inner corner
+                QPointF(3.4395833, 0.0)      // tab top corner
+            });
+            int factor = static_cast<int>((size * 0.90f) / svgW);
+            QSize pixmapSize(static_cast<int>(svgW * factor), static_cast<int>(svgH * factor));
+            QPixmap *pixmap = new QPixmap(pixmapSize);
             pixmap->fill(Qt::transparent);
             QPainter pixPainter(pixmap);
-            svgRenderer.render(&pixPainter);
+            // map the SVG viewBox onto the full pixmap rect
+            qreal sx = pixmapSize.width() / vbW, sy = pixmapSize.height() / vbH;
+            QTransform t;
+            t.scale(sx, sy);
+            pixPainter.setTransform(t);
+            pixPainter.setRenderHint(QPainter::Antialiasing);
+            pixPainter.setPen(Qt::NoPen);
+            pixPainter.setBrush(QColor(255, 0, 255)); // same placeholder color as the old SVG
+            pixPainter.drawPolygon(folderShape);
             pixPainter.end();
 
             ImageLib::recolor(*pixmap, settings->colorScheme().icons);
@@ -206,7 +230,6 @@ void DirectoryPresenter::generateThumbnails(QList<int> indexes, int size, bool c
                                                            "Folder",
                                                            size,
                                                            std::shared_ptr<QPixmap>(pixmap)));
-            // ^----------------------------------------------------------------
             view->setThumbnail(i, thumb);
         } else {
             QString path = model->filePathAt(i - model->dirCount());

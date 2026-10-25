@@ -418,7 +418,7 @@ void ViewerWidget::hideCursor() {
             //if(settings->enableClickZoneThing())
             // ignore when we are hovering the click zone
             if(clickZoneOverlay->leftZone().contains(posMapped) ||
-                clickZoneOverlay->leftZone().contains(posMapped))
+                clickZoneOverlay->rightZone().contains(posMapped))
             {
                 return;
             }

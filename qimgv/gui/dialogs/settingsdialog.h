@@ -52,6 +52,7 @@ private:
     void adjustSizeToContents();
     QMap<QString, QString> langs; // <"en_US", "English">
     QButtonGroup fitModeGrp, folderEndGrp, zoomIndGrp;
+    bool languageChanged = false;
 
 private slots:
     void saveSettings();

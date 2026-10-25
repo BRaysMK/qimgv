@@ -83,6 +83,10 @@ private:
 
     void attachModel(DirectoryModel *_model);
     QString selectedPath();
+    // Returns false if the user chose to keep their edits: any of `paths` has
+    // unsaved pixel edits which the intended operation (delete/move/rename/
+    // metadata undo) would silently destroy.
+    bool confirmUnsavedEditsLoss(const QList<QString> &paths);
     void guiSetImage(std::shared_ptr<Image> img);
     QTimer slideshowTimer;
 
