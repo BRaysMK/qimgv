@@ -740,6 +740,11 @@ void Core::onFileRemoved(QString filePath, int index) {
         mw->closeImage();
         state.hasActiveImage = false;
         state.currentFilePath = "";
+        // drop the reference: the info panel providers would otherwise keep
+        // serving the deleted file's metadata, and the shared_ptr would keep
+        // the image alive
+        state.currentImg = nullptr;
+        mw->refreshExifInfoIfVisible();
     }
     // image mode && removed current file
     if(state.currentFilePath == filePath) {
@@ -1657,6 +1662,10 @@ void Core::guiSetImage(std::shared_ptr<Image> img) {
     state.hasActiveImage = true;
     if(!img) {
         mw->showMessage(tr("Error: could not load image."));
+        // no valid image -> no metadata either; refresh so an open info panel
+        // does not keep displaying whatever was shown before
+        state.currentImg = nullptr;
+        mw->refreshExifInfoIfVisible();
         return;
     }
     DocumentType type = img->type();

@@ -1,8 +1,12 @@
 ## :exclamation: Updates may be slow due to war in Ukraine :sunflower: :sunflower: :sunflower:
 
-qimgv | Current version: 1.0.2
+qimgv | Current version: 1.0.5
 =====
 Image viewer. Fast, easy to use. Optional video support.
+
+This fork adds a full EXIF/XMP info panel and an EXIF metadata editor with
+snapshot-based undo, plus first-class Simplified Chinese localization
+(EXIF tag names, shortcut names and all dialogs are translated).
 
 Automated Windows builds are published to the [Releases](https://github.com/BRaysMK/qimgv/releases) page (tag `latest-dev`, prerelease) after every push to `master`.
 
@@ -52,6 +56,8 @@ Main window & panel        |  Folder view   |  Settings window
 | Toggle fullscreen mode  | DoubleClick / F / F11 |
 | Exit fullscreen mode | Esc |
 | Show EXIF panel  | I |
+| Edit metadata (EXIF editor)  | Ctrl+E |
+| Undo metadata edit  | Ctrl+Shift+Z |
 | Crop image  | X |
 | Resize image  | R |
 | Rotate left  | Ctrl+L |
@@ -88,6 +94,26 @@ Bring up the panel with C or M shortcut. You will see 9 destination directories,
 With panel visible, use 1 - 9 keys to copy/move current image to corresponding directory.
 
 When you are done press C or M again to hide the panel.
+
+## Using the EXIF panel & metadata editor
+
+Press `I` (or the info button) to open the EXIF/XMP panel. It reads metadata
+only while it is visible, so browsing stays fast. XMP (e.g. DJI drone flight
+data) is shown in a collapsible section below the EXIF table. The panel can
+be dragged by its header and resized freely.
+
+Press `Ctrl+E` (or right click > Edit metadata) to open the metadata editor:
+
+- **Edit**: double-click the Value column of any writable tag
+- **Delete**: select a row and press "Delete tag" (strike-through marks the
+  row; "Undo delete" restores it)
+- **Add**: "Add tag..." creates a tag in an already-registered XMP namespace
+- **Undo**: `Ctrl+Shift+Z` restores the file to the state before the first
+  edit of this session (one whole-file restore point per file)
+
+A snapshot is created only when the editor is opened and when a save is
+confirmed - never while browsing. Closing the editor without changes drops
+the snapshot.
 
 ## Running scripts
 
