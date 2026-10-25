@@ -21,7 +21,8 @@ jobs:
           update: true
           # nsis installed up-front: the mirror sometimes 429s a mid-script
           # pacman call, which fails the whole build
-          install: git p7zip mingw-w64-x86_64-nsis
+          # python runs scripts/prune-package.py (PE import-table pruning)
+          install: git p7zip mingw-w64-x86_64-nsis python
 
       - uses: actions/checkout@v4
         with: 

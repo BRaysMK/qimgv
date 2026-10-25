@@ -318,45 +318,16 @@ for pass in 1 2 3 4 5 6 7 8; do
     [ "$added" = "0" ] && break
 done
 
-# Prune unreachable DLLs. The ldd sweep can pull in dependency "islands"
-# (e.g. the msys2 freetype/glib/icu stack that nothing in this build links),
-# so after it settles, BFS the real import closure from the exe, mpv.exe and
-# every runtime-loaded plugin dll, and delete top-level dlls that are never
-# reached. (Verified: -52MB from the package, launch unaffected.)
-declare -A seen
-declare -A parent
-queue=($PACKAGE_DIR/qimgv.exe $PACKAGE_DIR/mpv.exe $(find $PACKAGE_DIR -path '*/platforms/*.dll' -o -path '*/printsupport/*.dll' -o -path '*/styles/*.dll' -o -path '*/iconengines/*.dll' -o -path '*/imageformats/*.dll' -o -path '*/plugins/*.dll'))
-while [ ${#queue[@]} -gt 0 ]; do
-    f="${queue[0]}"; queue=("${queue[@]:1}")
-    base=$(basename "$f")
-    [ -n "${seen[$base]:-}" ] && continue
-    seen[$base]=1
-    for d in $(ldd "$f" 2>/dev/null | grep '=>' | awk '{print $1}'); do
-        if [ -f "$PACKAGE_DIR/$d" ] && [ -z "${seen[$d]:-}" ]; then
-            parent[$d]="$base"
-            queue+=("$PACKAGE_DIR/$d")
-        fi
-    done
-done
-# debug: how did the freetype/glib/icu island get reached?
-for probe in libicudt78.dll libicuin78.dll libfreetype-6.dll libglib-2.0-0.dll libharfbuzz-0.dll; do
-    if [ -n "${seen[$probe]:-}" ]; then
-        chain="$probe"
-        cur=$probe
-        while [ -n "${parent[$cur]:-}" ]; do
-            cur="${parent[$cur]}"
-            chain="$cur <- $chain"
-        done
-        echo "BFS: $chain"
-    fi
-done
-for f in $PACKAGE_DIR/*.dll; do
-    base=$(basename "$f")
-    if [ -z "${seen[$base]:-}" ]; then
-        echo "prune unreachable: $base"
-        rm -f "$f"
-    fi
-done
+# Prune unreachable DLLs. The ldd sweep above can pull in dependency
+# "islands" (the msys2 freetype/glib/icu stack references only itself), and
+# ldd itself is unreliable in both directions (it misses deps that are not on
+# PATH, and on CI it once reported phantom deps). So the final cut is decided
+# by walking the REAL PE import tables (scripts/prune-package.py, pure
+# stdlib): BFS from qimgv.exe, mpv.exe and every runtime-loaded plugin dll;
+# anything not reached is deleted. Verified on a shipped package: -41MB
+# (icu x3, freetype, glib, harfbuzz, graphite2, bz2, pcre2-8, intl, Qt5Svg),
+# launch unaffected.
+python "$SCRIPTS_DIR/prune-package.py" "$PACKAGE_DIR"
 
 cd $SRC_DIR
 echo "PACKAGING DONE"
