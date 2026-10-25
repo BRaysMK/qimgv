@@ -324,6 +324,7 @@ done
 # every runtime-loaded plugin dll, and delete top-level dlls that are never
 # reached. (Verified: -52MB from the package, launch unaffected.)
 declare -A seen
+declare -A parent
 queue=($PACKAGE_DIR/qimgv.exe $PACKAGE_DIR/mpv.exe $(find $PACKAGE_DIR -path '*/platforms/*.dll' -o -path '*/printsupport/*.dll' -o -path '*/styles/*.dll' -o -path '*/iconengines/*.dll' -o -path '*/imageformats/*.dll' -o -path '*/plugins/*.dll'))
 while [ ${#queue[@]} -gt 0 ]; do
     f="${queue[0]}"; queue=("${queue[@]:1}")
@@ -332,9 +333,22 @@ while [ ${#queue[@]} -gt 0 ]; do
     seen[$base]=1
     for d in $(ldd "$f" 2>/dev/null | grep '=>' | awk '{print $1}'); do
         if [ -f "$PACKAGE_DIR/$d" ] && [ -z "${seen[$d]:-}" ]; then
+            parent[$d]="$base"
             queue+=("$PACKAGE_DIR/$d")
         fi
     done
+done
+# debug: how did the freetype/glib/icu island get reached?
+for probe in libicudt78.dll libicuin78.dll libfreetype-6.dll libglib-2.0-0.dll libharfbuzz-0.dll; do
+    if [ -n "${seen[$probe]:-}" ]; then
+        chain="$probe"
+        cur=$probe
+        while [ -n "${parent[$cur]:-}" ]; do
+            cur="${parent[$cur]}"
+            chain="$cur <- $chain"
+        done
+        echo "BFS: $chain"
+    fi
 done
 for f in $PACKAGE_DIR/*.dll; do
     base=$(basename "$f")
