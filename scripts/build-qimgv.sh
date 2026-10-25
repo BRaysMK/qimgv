@@ -268,6 +268,10 @@ cd $CUSTOM_QT_DIR/bin
 cp Qt5Core.dll Qt5Gui.dll Qt5PrintSupport.dll Qt5Svg.dll Qt5Widgets.dll $PACKAGE_DIR
 cd $CUSTOM_QT_DIR/plugins
 cp -r iconengines imageformats printsupport styles $PACKAGE_DIR
+# The app no longer renders SVG (the folder icon is drawn via QPainterPath),
+# so drop the svg plugins - otherwise the ldd sweep would drag Qt5Svg.dll
+# back into the package.
+rm -f $PACKAGE_DIR/imageformats/qsvg.dll $PACKAGE_DIR/iconengines/qsvgicon.dll
 mkdir $PACKAGE_DIR/platforms
 cp platforms/qwindows.dll $PACKAGE_DIR/platforms
 
