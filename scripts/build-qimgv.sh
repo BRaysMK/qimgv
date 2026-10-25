@@ -265,7 +265,7 @@ fi
 
 # 2 - copy qt dlls
 cd $CUSTOM_QT_DIR/bin
-cp Qt5Core.dll Qt5Gui.dll Qt5PrintSupport.dll Qt5Svg.dll Qt5Widgets.dll $PACKAGE_DIR
+cp Qt5Core.dll Qt5Gui.dll Qt5PrintSupport.dll Qt5Widgets.dll $PACKAGE_DIR
 cd $CUSTOM_QT_DIR/plugins
 cp -r iconengines imageformats printsupport styles $PACKAGE_DIR
 # The app no longer renders SVG (the folder icon is drawn via QPainterPath),
@@ -316,6 +316,32 @@ for pass in 1 2 3 4 5 6 7 8; do
         done
     done
     [ "$added" = "0" ] && break
+done
+
+# Prune unreachable DLLs. The ldd sweep can pull in dependency "islands"
+# (e.g. the msys2 freetype/glib/icu stack that nothing in this build links),
+# so after it settles, BFS the real import closure from the exe, mpv.exe and
+# every runtime-loaded plugin dll, and delete top-level dlls that are never
+# reached. (Verified: -52MB from the package, launch unaffected.)
+declare -A seen
+queue=($PACKAGE_DIR/qimgv.exe $PACKAGE_DIR/mpv.exe $(find $PACKAGE_DIR -path '*/platforms/*.dll' -o -path '*/printsupport/*.dll' -o -path '*/styles/*.dll' -o -path '*/iconengines/*.dll' -o -path '*/imageformats/*.dll' -o -path '*/plugins/*.dll'))
+while [ ${#queue[@]} -gt 0 ]; do
+    f="${queue[0]}"; queue=("${queue[@]:1}")
+    base=$(basename "$f")
+    [ -n "${seen[$base]:-}" ] && continue
+    seen[$base]=1
+    for d in $(ldd "$f" 2>/dev/null | grep '=>' | awk '{print $1}'); do
+        if [ -f "$PACKAGE_DIR/$d" ] && [ -z "${seen[$d]:-}" ]; then
+            queue+=("$PACKAGE_DIR/$d")
+        fi
+    done
+done
+for f in $PACKAGE_DIR/*.dll; do
+    base=$(basename "$f")
+    if [ -z "${seen[$base]:-}" ]; then
+        echo "prune unreachable: $base"
+        rm -f "$f"
+    fi
 done
 
 cd $SRC_DIR
