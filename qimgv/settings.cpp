@@ -326,7 +326,7 @@ QList<QByteArray> Settings::supportedFormats() {
 QString Settings::supportedFormatsFilter() {
     QString filters;
     auto formats = supportedFormats();
-    filters.append("Supported files (");
+    filters.append(tr("Supported files ("));
     for(int i = 0; i < formats.count(); i++)
         filters.append("*." + QString(formats.at(i)) + " ");
     filters.append(")");
@@ -1201,4 +1201,21 @@ bool Settings::showHiddenFiles() {
 
 void Settings::setShowHiddenFiles(bool mode) {
     settings->settingsConf->setValue("showHiddenFiles", mode);
+}
+//------------------------------------------------------------------------------
+// EXIF info panel state (savedState.ini)
+QRect Settings::exifPanelGeometry() {
+    return settings->stateConf->value("exifPanelGeometry").toRect();
+}
+
+void Settings::setExifPanelGeometry(QRect rect) {
+    settings->stateConf->setValue("exifPanelGeometry", rect);
+}
+
+bool Settings::xmpSectionExpanded() {
+    return settings->stateConf->value("xmpSectionExpanded", false).toBool();
+}
+
+void Settings::setXmpSectionExpanded(bool mode) {
+    settings->stateConf->setValue("xmpSectionExpanded", mode);
 }

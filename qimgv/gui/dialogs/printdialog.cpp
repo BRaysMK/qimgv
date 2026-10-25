@@ -67,7 +67,7 @@ void PrintDialog::setOutputPath(QString path) {
 }
 
 QString PrintDialog::pdfPathDialog() {
-    return QFileDialog::getSaveFileName(this, tr("Choose pdf location"), pdfPrinter.outputFileName(), "*.pdf");
+    return QFileDialog::getSaveFileName(this, tr("Choose pdf location"), pdfPrinter.outputFileName(), "PDF (*.pdf)");
 }
 
 void PrintDialog::updatePreview() {

@@ -588,10 +588,10 @@ void MW::showOpenDialog(QString path) {
     QFileDialog dialog(this);
     QStringList imageFilter;
     imageFilter.append(settings->supportedFormatsFilter());
-    imageFilter.append("All Files (*)");
+    imageFilter.append(tr("All Files (*)"));
     dialog.setDirectory(path);
     dialog.setNameFilters(imageFilter);
-    dialog.setWindowTitle("Open image");
+    dialog.setWindowTitle(tr("Open image"));
     dialog.setWindowModality(Qt::ApplicationModal);
     connect(&dialog, &QFileDialog::fileSelected, this, &MW::opened);
     dialog.exec();

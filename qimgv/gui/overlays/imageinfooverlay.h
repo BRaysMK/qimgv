@@ -30,11 +30,13 @@ protected:
     void wheelEvent(QWheelEvent *event);
     void recalculateGeometry() override;
     void resizeEvent(QResizeEvent *event) override;
+    void hideEvent(QHideEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *event) override;
     bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
+    void savePanelState();
     Ui::ImageInfoOverlay *ui;
     QList<EntryInfoItem*> entries;
     QList<EntryInfoItem*> xmpEntries;

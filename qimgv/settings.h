@@ -310,6 +310,12 @@ public:
     bool showHiddenFiles();
     void setShowHiddenFiles(bool mode);
 
+    // EXIF info panel: remembered position/size and XMP section state
+    QRect exifPanelGeometry();
+    void setExifPanelGeometry(QRect rect);
+    bool xmpSectionExpanded();
+    void setXmpSectionExpanded(bool mode);
+
 private:
     explicit Settings(QObject *parent = nullptr);
     QSettings *settingsConf, *stateConf, *themeConf;

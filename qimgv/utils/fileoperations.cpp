@@ -40,7 +40,7 @@ void FileOperations::removeDir(const QString &dirPath, bool recursive, FileOpRes
 QString FileOperations::decodeResult(const FileOpResult &result) {
     switch(result) {
     case FileOpResult::SUCCESS:
-        return QObject::tr("Operation completed succesfully.");
+        return QObject::tr("Operation completed successfully.");
     case FileOpResult::DESTINATION_FILE_EXISTS:
         return QObject::tr("Destination file exists.");
     case FileOpResult::DESTINATION_DIR_EXISTS:
