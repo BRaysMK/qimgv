@@ -27,9 +27,14 @@ rm -rf $BUILD_DIR
 mkdir -p $BUILD_DIR
 
 # ------------------------------------------------------------------------------
-echo "UPDATING DEPENDENCY LIST"
+echo "UPDATING BUILD DEPENDENCY LIST"
 wget --progress=dot:mega -O $BUILD_DIR/msys2-build-deps.txt https://raw.githubusercontent.com/easymodo/qimgv-deps-bin/main/msys2-build-deps.txt
-wget --progress=dot:mega -O $BUILD_DIR/msys2-dll-deps.txt https://raw.githubusercontent.com/easymodo/qimgv-deps-bin/main/msys2-dll-deps.txt
+# NOTE: the upstream msys2-dll-deps.txt runtime list is intentionally NOT used.
+# It was made for upstream's MSYS2 Qt build and ships ~55 MB of DLLs this fork
+# never loads (ICU, OpenSSL/curl, freetype/harfbuzz/glib, ...): the slim Qt and
+# the CURL/SSH-off exiv2 build link none of them. This fork ships only the DLLs
+# actually imported (scripts/msys2-dll-deps-fork.txt, audited via ldd closure);
+# the ldd sweep below still pulls anything new/renamed automatically.
 
 # ------------------------------------------------------------------------------
 echo "INSTALLING MSYS2 BUILD DEPS"
@@ -266,8 +271,9 @@ cp -r iconengines imageformats printsupport styles $PACKAGE_DIR
 mkdir $PACKAGE_DIR/platforms
 cp platforms/qwindows.dll $PACKAGE_DIR/platforms
 
-# 3 - copy msys dlls
-MSYS_DLLS=$(grep -v '^libexiv2' $BUILD_DIR/msys2-dll-deps.txt | tr '\n' ' ')
+# 3 - copy msys dlls (fork-local audited list: only what is really imported;
+#     the ldd sweep below still adds anything new, renamed or missed)
+MSYS_DLLS=$(grep -v '^libexiv2' $SCRIPTS_DIR/msys2-dll-deps-fork.txt | tr '\n' ' ')
 cd $MSYS_DIR/bin
 cp $MSYS_DLLS $PACKAGE_DIR
 # exiv2 was built from source; copy its runtime dll (MinGW names it libexiv2.dll)
