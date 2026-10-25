@@ -1,6 +1,8 @@
 #include "imageinfooverlay.h"
 #include "ui_imageinfooverlay.h"
 #include <QFontMetrics>
+#include <QHideEvent>
+#include "settings.h"
 
 // QSizeGrip resizes the *top-level* window by default. This overlay lives
 // inside the viewer, so a plain QSizeGrip would resize the whole app window
@@ -62,11 +64,11 @@ ImageInfoOverlay::ImageInfoOverlay(FloatingWidgetContainer *parent) :
     sizeGrip->setCursor(Qt::SizeFDiagCursor);
     sizeGrip->installEventFilter(this);
 
-    // XMP section: collapsible, collapsed by default
+    // XMP section: collapsible; remember the user's choice across restarts
     xmpToggle = new QToolButton(this);
     xmpToggle->setText(tr("XMP info"));
     xmpToggle->setCheckable(true);
-    xmpToggle->setChecked(false);
+    xmpToggle->setChecked(settings->xmpSectionExpanded());
     xmpToggle->setArrowType(Qt::RightArrow);
     xmpToggle->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
     xmpToggle->setStyleSheet("QToolButton { border: none; padding: 4px 6px; color: #999999; background: transparent; }");
@@ -90,6 +92,16 @@ ImageInfoOverlay::ImageInfoOverlay(FloatingWidgetContainer *parent) :
 
     if(parent)
         setContainerSize(parent->size());
+
+    // restore the panel geometry the user chose in a previous session;
+    // recalculateGeometry() clamps it to the actual container on show()
+    const QRect savedGeom = settings->exifPanelGeometry();
+    if(savedGeom.width() > 0 && savedGeom.height() > 0) {
+        userMoved = true;
+        userResized = true;
+        resize(savedGeom.size());
+        move(savedGeom.topLeft());
+    }
 }
 
 ImageInfoOverlay::~ImageInfoOverlay() {
@@ -334,6 +346,18 @@ void ImageInfoOverlay::mouseReleaseEvent(QMouseEvent *event) {
         return;
     }
     QWidget::mouseReleaseEvent(event);
+}
+
+void ImageInfoOverlay::hideEvent(QHideEvent *event) {
+    QWidget::hideEvent(event);
+    savePanelState();
+}
+
+void ImageInfoOverlay::savePanelState() {
+    // remember panel geometry and the XMP section state for the next session
+    settings->setExifPanelGeometry(geometry());
+    if(xmpToggle)
+        settings->setXmpSectionExpanded(xmpToggle->isChecked());
 }
 
 void ImageInfoOverlay::wheelEvent(QWheelEvent *event) {
