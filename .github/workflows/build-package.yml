@@ -19,7 +19,9 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          install: git p7zip
+          # nsis installed up-front: the mirror sometimes 429s a mid-script
+          # pacman call, which fails the whole build
+          install: git p7zip mingw-w64-x86_64-nsis
 
       - uses: actions/checkout@v4
         with: 

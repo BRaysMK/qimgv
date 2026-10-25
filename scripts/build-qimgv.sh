@@ -349,8 +349,15 @@ echo "PACKAGING DONE"
 
 # ------------------------------------------------------------------------------
 echo "BUILDING NSIS INSTALLER"
-# NSIS is not in the base msys2 image; install it now
-pacman -S --noconfirm --needed mingw-w64-x86_64-nsis
+# NSIS: normally already present (installed by the workflow's setup-msys2).
+# Retry here anyway - msys2 mirrors occasionally answer 429.
+ok=0
+for i in 1 2 3 4 5; do
+    if pacman -S --noconfirm --needed mingw-w64-x86_64-nsis; then ok=1; break; fi
+    echo "pacman attempt $i failed (mirror rate limit?), retrying..."
+    sleep 20
+done
+[ "$ok" = "1" ] || { echo "ERROR: could not install nsis"; exit 1; }
 VER=$(git describe --tags)
 # numeric version for the installer's version resource; must be exactly X.X.X.X.
 # Take the app version from appversion.cpp (the git describe string can contain
